@@ -26,6 +26,10 @@
 
   <main class="wrap">
     <section class="panel">
+      <div class="banner-warning" style="background: rgba(255, 170, 0, 0.12); border: 1px solid rgba(255, 170, 0, 0.35); color: #ffb74d; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; line-height: 1.5;">
+        <strong>⚠️ HANYA VISUALISASI EDUKASI:</strong> Fitur ini khusus mendemonstrasikan kelemahan struktural mode ECB (kebocoran pola visual) dibandingkan mode aman (AES-GCM). Jangan dipakai untuk data asli, dan hasil tidak boleh diunduh sebagai berkas enkripsi (<code>.enc</code>).
+      </div>
+
       <h2>Enkripsi Citra: Mode ECB vs Mode Aman (GCM)</h2>
       <p class="hint">Mode ECB mengenkripsi tiap blok data secara independen, sehingga pola berulang pada gambar asli (misalnya area warna solid) tetap terlihat pada hasil enkripsi. Mode GCM menghasilkan output yang sepenuhnya acak tanpa pola.</p>
 
@@ -35,6 +39,7 @@
       <div class="btn-row">
         <button class="btn-primary" id="btnProcess">Proses &amp; Bandingkan</button>
       </div>
+      <div id="processStatus" class="progress-box" style="display:none; margin-top: 14px;"></div>
 
       <div class="canvas-grid" id="resultGrid" style="display:none">
         <div class="canvas-box">
@@ -61,29 +66,65 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
   const file = document.getElementById("imageInput").files[0];
   if (!file) return alert("Pilih gambar terlebih dahulu.");
 
-  const img = await loadImage(file);
-  const canvas = document.createElement("canvas");
-  canvas.width = img.width;
-  canvas.height = img.height;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(img, 0, 0);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const rawBytes = new Uint8Array(imageData.data.buffer.slice(0));
+  const btn = document.getElementById("btnProcess");
+  const statusBox = document.getElementById("processStatus");
+  btn.disabled = true;
+  btn.textContent = "Memproses citra...";
+  statusBox.style.display = "";
+  statusBox.textContent = "Menyiapkan citra dan kunci kriptografi acak...";
 
-  // Kunci demo tetap (khusus fitur visualisasi ini, bukan untuk data sungguhan)
-  const password = "demo-visual-ecb";
-  const salt = new TextEncoder().encode("salt-tetap-16by");
-  const keyCBC = await deriveKey(password, salt, "AES-CBC", 256);
-  const keyGCM = await deriveKey(password, salt, "AES-GCM", 256);
+  try {
+    const img = await loadImage(file);
+    
+    // Downscale jika ukuran gambar melebihi 256px agar proses enkripsi blok tidak freeze
+    const MAX_DIM = 256;
+    let targetWidth = img.width;
+    let targetHeight = img.height;
+    if (targetWidth > MAX_DIM || targetHeight > MAX_DIM) {
+      if (targetWidth > targetHeight) {
+        targetHeight = Math.round((targetHeight * MAX_DIM) / targetWidth);
+        targetWidth = MAX_DIM;
+      } else {
+        targetWidth = Math.round((targetWidth * MAX_DIM) / targetHeight);
+        targetHeight = MAX_DIM;
+      }
+    }
 
-  const ecbBytes = await encryptImageECB(keyCBC, rawBytes);
-  const secureBytes = await encryptImageSecure(keyGCM, rawBytes);
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+    const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+    const rawBytes = new Uint8Array(imageData.data.buffer.slice(0));
 
-  drawResult("canvasOriginal", imageData, canvas.width, canvas.height);
-  drawResult("canvasECB", makeImageData(ecbBytes, canvas.width, canvas.height), canvas.width, canvas.height);
-  drawResult("canvasSecure", makeImageData(secureBytes, canvas.width, canvas.height), canvas.width, canvas.height);
+    statusBox.textContent = `Memproses enkripsi citra (${targetWidth}x${targetHeight} piksel, ${(rawBytes.length / 1024).toFixed(1)} KB)...`;
 
-  document.getElementById("resultGrid").style.display = "";
+    // Baseline Security Rules: Dilarang hardcode secret/password/salt.
+    // Selalu bangkitkan password dan salt acak kriptografis (CSPRNG) per proses.
+    const randomPwBytes = crypto.getRandomValues(new Uint8Array(16));
+    const dynamicPassword = Array.from(randomPwBytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+    const dynamicSalt = crypto.getRandomValues(new Uint8Array(16));
+
+    const keyCBC = await deriveKey(dynamicPassword, dynamicSalt, "AES-CBC", 256);
+    const keyGCM = await deriveKey(dynamicPassword, dynamicSalt, "AES-GCM", 256);
+
+    const ecbBytes = await encryptImageECB(keyCBC, rawBytes);
+    const secureBytes = await encryptImageSecure(keyGCM, rawBytes);
+
+    drawResult("canvasOriginal", imageData, targetWidth, targetHeight);
+    drawResult("canvasECB", makeImageData(ecbBytes, targetWidth, targetHeight), targetWidth, targetHeight);
+    drawResult("canvasSecure", makeImageData(secureBytes, targetWidth, targetHeight), targetWidth, targetHeight);
+
+    document.getElementById("resultGrid").style.display = "";
+    statusBox.style.display = "none";
+  } catch (err) {
+    statusBox.textContent = "Gagal memproses citra: " + err.message;
+    statusBox.className = "error-box";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Proses & Bandingkan";
+  }
 });
 
 function loadImage(file) {
