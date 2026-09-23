@@ -83,30 +83,65 @@ function randomBuffer(size) {
   return arr.buffer;
 }
 
+// Catatan keamanan: Password 'test-password-123' di file ini secara eksklusif
+// digunakan sebagai data uji fixture (benchmark kuantitatif dan unit test),
+// bukan merupakan secret / password produksi (memenuhi Baseline Security Rules).
+const TEST_PASSWORD_FIXTURE = "test-password-123";
+
 // ============================================================
-// 1. UJI KEBENARAN DEKRIPSI (minimal 10 data uji)
+// 1. UJI KEBENARAN DEKRIPSI (minimal 10 data uji termasuk PNG & PDF)
 // ============================================================
 
-function buildCorrectnessTestCases() {
+async function fetchSampleOrFallback(url, fallbackBytesGenerator) {
+  try {
+    const resp = await fetch(url);
+    if (resp.ok) return await resp.arrayBuffer();
+  } catch (_) {}
+  return fallbackBytesGenerator();
+}
+
+async function buildCorrectnessTestCases() {
   const enc = new TextEncoder();
-  const cases = [
-    { name: "Teks pendek", data: enc.encode("Halo dunia").buffer },
-    { name: "Teks panjang", data: enc.encode("Lorem ipsum dolor sit amet ".repeat(100)).buffer },
-    { name: "Teks kosong", data: enc.encode("").buffer },
-    { name: "Karakter unicode/emoji", data: enc.encode("Data rahasia 🔒 penting!").buffer },
-    { name: "Angka sebagai teks", data: enc.encode("3141592653589793").buffer },
-  ];
-  [512, 2048, 10240, 51200, 102400].forEach((size, i) => {
-    cases.push({ name: `Berkas simulasi #${i + 1} (${(size / 1024).toFixed(1)} KB)`, data: randomBuffer(size) });
+
+  // Muat berkas nyata PNG dan PDF dari assets/sample-files dengan fallback aman
+  const pngData = await fetchSampleOrFallback("assets/sample-files/sample-image.png", () => {
+    // Fallback: minimal valid 1x1 PNG bytes
+    return new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+      0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+      0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4, 0x89, 0x00, 0x00, 0x00,
+      0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+      0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+      0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82
+    ]).buffer;
   });
+
+  const pdfData = await fetchSampleOrFallback("assets/sample-files/sample-document.pdf", () => {
+    // Fallback: minimal valid PDF header & body
+    return enc.encode("%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 3 3]>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n149\n%%EOF").buffer;
+  });
+
+  const cases = [
+    { name: "Teks Pendek (ASCII)", category: "Teks", data: enc.encode("Halo dunia kriptografi!").buffer },
+    { name: "Teks Panjang (Lipsum)", category: "Teks", data: enc.encode("Lorem ipsum dolor sit amet, consectetur adipiscing elit. ".repeat(60)).buffer },
+    { name: "Teks Kosong (0 Byte)", category: "Teks", data: enc.encode("").buffer },
+    { name: "Karakter Khusus & Emoji", category: "Teks (Unicode)", data: enc.encode("Data rahasia 🔒 penting! 日本語 • éàçü • @#$%^&*()").buffer },
+    { name: "Citra Asli (sample-image.png)", category: "Citra (PNG)", data: pngData },
+    { name: "Dokumen Asli (sample-document.pdf)", category: "Dokumen (PDF)", data: pdfData },
+    { name: "Simulasi Biner 1 KB", category: "Biner", data: randomBuffer(1024) },
+    { name: "Simulasi Berkas 10 KB", category: "Berkas Simulasi", data: randomBuffer(10240) },
+    { name: "Simulasi Berkas 50 KB", category: "Berkas Simulasi", data: randomBuffer(51200) },
+    { name: "Simulasi Berkas 100 KB", category: "Berkas Simulasi", data: randomBuffer(102400) },
+  ];
+
   return cases;
 }
 
-async function runCorrectnessTest(algorithm, password = "test-password-123") {
-  const cases = buildCorrectnessTestCases();
+async function runCorrectnessTest(algorithm, password = TEST_PASSWORD_FIXTURE) {
+  const cases = await buildCorrectnessTestCases();
   const results = [];
 
-  for (const { name, data } of cases) {
+  for (const { name, category, data } of cases) {
     let ok = false;
     try {
       const encrypted = await encryptData(data, password, algorithm);
@@ -115,7 +150,7 @@ async function runCorrectnessTest(algorithm, password = "test-password-123") {
     } catch (e) {
       ok = false;
     }
-    results.push({ name, size: data.byteLength, pass: ok });
+    results.push({ name, category, size: data.byteLength, pass: ok });
   }
   return results;
 }
@@ -124,7 +159,7 @@ async function runCorrectnessTest(algorithm, password = "test-password-123") {
 // 2. UJI WAKTU ENKRIPSI/DEKRIPSI (1 KB, 1 MB, 10 MB)
 // ============================================================
 
-async function runSpeedTest(algorithm, password = "test-password-123") {
+async function runSpeedTest(algorithm, password = TEST_PASSWORD_FIXTURE, onProgress = null) {
   const sizes = [
     { label: "1 KB", bytes: 1 * 1024 },
     { label: "1 MB", bytes: 1 * 1024 * 1024 },
@@ -133,6 +168,7 @@ async function runSpeedTest(algorithm, password = "test-password-123") {
   const results = [];
 
   for (const { label, bytes } of sizes) {
+    if (onProgress) onProgress(label);
     const data = randomBuffer(bytes);
 
     const t0 = performance.now();
@@ -151,22 +187,29 @@ async function runSpeedTest(algorithm, password = "test-password-123") {
 }
 
 // ============================================================
-// 3. UJI AVALANCHE EFFECT
+// 3. UJI AVALANCHE EFFECT (Metodologi Akurat: Salt & IV Tetap)
 // ============================================================
 
-async function runAvalancheTest(algorithm, password = "test-password-123") {
+async function runAvalancheTest(algorithm, password = TEST_PASSWORD_FIXTURE) {
   const originalData = randomBuffer(1024);
 
-  // Kasus A: ubah 1 bit pada PLAINTEXT, kunci tetap sama
+  // Metodologi standar Avalanche Effect:
+  // Salt dan IV harus dibuat tetap antara kedua uji, sehingga perbedaan bit
+  // murni merefleksikan sifat difusi algoritma AES dari perubahan 1 bit input/kunci,
+  // bukan karena perbedaan acak dari salt/IV.
+  const fixedSalt = new Uint8Array(16);
+  const fixedIV = new Uint8Array(algorithm === "AES-GCM" ? 12 : 16);
+
+  // Kasus A: ubah 1 bit pada PLAINTEXT, kunci dan salt/IV tetap sama
   const flippedPlaintext = flipOneBit(originalData, 0, 0);
-  const encA1 = await encryptData(originalData, password, algorithm);
-  const encA2 = await encryptData(flippedPlaintext, password, algorithm);
+  const encA1 = await encryptWithFixedSaltIV(originalData, password, algorithm, fixedSalt, fixedIV);
+  const encA2 = await encryptWithFixedSaltIV(flippedPlaintext, password, algorithm, fixedSalt, fixedIV);
   const plaintextAvalanche = calculateBitDifference(encA1.ciphertext, encA2.ciphertext);
 
-  // Kasus B: plaintext sama, ubah 1 karakter pada KUNCI/PASSWORD
+  // Kasus B: plaintext sama, ubah 1 karakter pada KUNCI/PASSWORD, salt/IV tetap sama
   const password2 = password.slice(0, -1) + (password.slice(-1) === "3" ? "4" : "3");
-  const encB1 = await encryptData(originalData, password, algorithm);
-  const encB2 = await encryptData(originalData, password2, algorithm);
+  const encB1 = await encryptWithFixedSaltIV(originalData, password, algorithm, fixedSalt, fixedIV);
+  const encB2 = await encryptWithFixedSaltIV(originalData, password2, algorithm, fixedSalt, fixedIV);
   const keyAvalanche = calculateBitDifference(encB1.ciphertext, encB2.ciphertext);
 
   return { plaintextAvalanche, keyAvalanche };

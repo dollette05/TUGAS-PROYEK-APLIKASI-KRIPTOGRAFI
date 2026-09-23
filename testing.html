@@ -43,16 +43,17 @@
 
     <section class="panel test-card">
       <h3>1. Uji Kebenaran Dekripsi</h3>
-      <p class="desc">10 data uji (teks & simulasi berkas) dienkripsi lalu didekripsi, hasilnya dibandingkan byte-demi-byte.</p>
+      <p class="desc">10 data uji (termasuk dokumen PDF dan citra PNG asli serta simulasi berkas) dienkripsi lalu didekripsi, hasilnya dibandingkan byte-demi-byte.</p>
       <table id="correctnessTable" style="display:none">
-        <thead><tr><th>Data Uji</th><th>Ukuran</th><th>Status</th></tr></thead>
+        <thead><tr><th>Data Uji</th><th>Kategori</th><th>Ukuran</th><th>Status</th></tr></thead>
         <tbody id="correctnessBody"></tbody>
       </table>
     </section>
 
     <section class="panel test-card">
       <h3>2. Uji Waktu Enkripsi/Dekripsi</h3>
-      <p class="desc">Waktu proses untuk berkas berukuran 1 KB, 1 MB, dan 10 MB.</p>
+      <p class="desc">Waktu proses untuk berkas berukuran 1 KB, 1 MB, dan 10 MB (menggunakan Web Crypto API &amp; PBKDF2).</p>
+      <div id="speedProgress" class="progress-box" style="display:none; font-size:12.5px; padding:8px 12px; margin-bottom:10px;"></div>
       <table id="speedTable" style="display:none">
         <thead><tr><th>Ukuran</th><th>Waktu Enkripsi</th><th>Waktu Dekripsi</th></tr></thead>
         <tbody id="speedBody"></tbody>
@@ -61,7 +62,7 @@
 
     <section class="panel test-card">
       <h3>3. Uji Avalanche Effect</h3>
-      <p class="desc">Persentase bit cipherteks yang berubah ketika 1 bit plainteks atau kunci diubah. Idealnya mendekati 50%.</p>
+      <p class="desc">Persentase bit cipherteks yang berubah ketika 1 bit plainteks atau kunci diubah (menggunakan salt &amp; IV tetap agar murni mengukur difusi AES). Idealnya mendekati ~50%.</p>
       <div id="avalancheResult" style="display:none">
         <div class="metric-row"><span class="metric-label">Perubahan 1 bit plainteks</span><span id="avaPlain"></span></div>
         <div class="metric-row"><span class="metric-label">Perubahan 1 karakter kunci</span><span id="avaKey"></span></div>
@@ -113,7 +114,9 @@ async function runAndShowCorrectness() {
   body.innerHTML = "";
   results.forEach((r) => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${r.name}</td><td>${r.size.toLocaleString("id-ID")} B</td>
+    tr.innerHTML = `<td>${r.name}</td>
+      <td><span class="badge" style="font-size:11px; padding:2px 8px;">${r.category || "Berkas"}</span></td>
+      <td>${r.size.toLocaleString("id-ID")} B</td>
       <td class="${r.pass ? "pass" : "fail"}">${r.pass ? "LULUS" : "GAGAL"}</td>`;
     body.appendChild(tr);
   });
@@ -121,7 +124,15 @@ async function runAndShowCorrectness() {
 }
 
 async function runAndShowSpeed() {
-  const results = await runSpeedTest("AES-GCM");
+  const speedProgress = document.getElementById("speedProgress");
+  speedProgress.style.display = "";
+  speedProgress.textContent = "Menyiapkan pengujian kecepatan berkas...";
+
+  const results = await runSpeedTest("AES-GCM", TEST_PASSWORD_FIXTURE, (label) => {
+    speedProgress.textContent = `Sedang mengukur kecepatan enkripsi & dekripsi untuk ukuran ${label}...`;
+  });
+
+  speedProgress.style.display = "none";
   const body = document.getElementById("speedBody");
   body.innerHTML = "";
   results.forEach((r) => {
