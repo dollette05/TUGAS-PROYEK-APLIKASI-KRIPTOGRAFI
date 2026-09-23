@@ -2,15 +2,12 @@
  * unit-tests.js
  * -------------------------------------------------------
  * Minimal 5 unit test untuk fungsi inti, sesuai Ketentuan
- * Teknis Umum pada dokumen tugas.
+ * Teknis Umum pada dokumen tugas (sekarang diperluas jadi 8).
  *
- * Cara menjalankan:
- *   1. Buka file ini bersamaan dengan crypto.js dan testing.js
- *      di halaman HTML kosong (lihat unit-tests.html), ATAU
- *   2. Jalankan lewat Node.js jika lingkungan mendukung Web
- *      Crypto API (Node 19+ sudah menyediakan `crypto.webcrypto`).
- *
- * Setiap fungsi test() mengembalikan { name, pass, message }.
+ * Catatan Baseline Security Rules:
+ * Password dummy seperti "password123", "kunciAman!", dll. yang
+ * digunakan pada file ini secara eksklusif merupakan fixture
+ * data pengujian unit lokal, bukan rahasia/kunci produksi.
  * -------------------------------------------------------
  */
 
@@ -123,6 +120,56 @@ async function testEntropyDistinguishesRandomness() {
 }
 
 // ============================================================
+// UNIT TEST 7: Serialisasi paket Base64 dan Heksadesimal
+// bekerja dua arah (round-trip) dan dapat didekripsi dengan sempurna.
+// ============================================================
+async function testPackageRoundTripBase64AndHex() {
+  const plaintext = new TextEncoder().encode("uji round-trip format b64 & hex 12345").buffer;
+  const encrypted = await encryptData(plaintext, "passwordUjiFmt", "AES-GCM");
+
+  // Uji Base64
+  const b64 = packageToBase64(encrypted);
+  const unpkgB64 = unpackageFromText(b64);
+  const decB64 = await decryptData(unpkgB64, "passwordUjiFmt", unpkgB64.algorithm);
+  assert(buffersEqual(plaintext, decB64), "Unpackage Base64 harus menghasilkan plaintext asli");
+
+  // Uji Heksadesimal
+  const hex = packageToHex(encrypted);
+  const unpkgHex = unpackageFromText(hex);
+  const decHex = await decryptData(unpkgHex, "passwordUjiFmt", unpkgHex.algorithm);
+  assert(buffersEqual(plaintext, decHex), "Unpackage Heksadesimal harus menghasilkan plaintext asli");
+}
+
+// ============================================================
+// UNIT TEST 8: Validasi berkas .enc rusak / tidak valid
+// menolak berkas yang terlalu kecil atau korup dengan melempar error.
+// ============================================================
+async function testCorruptedEnvelopeRejected() {
+  // 1. Berkas terlalu kecil (< 34 byte)
+  const tooSmallBlob = new Blob([new Uint8Array([1, 12, 3, 4, 5])]);
+  let threwTooSmall = false;
+  try {
+    await unpackageFromFile(tooSmallBlob);
+  } catch (e) {
+    threwTooSmall = true;
+  }
+  assert(threwTooSmall, "Berkas .enc terlalu kecil harus melempar error validasi");
+
+  // 2. Pengenal algoritma tidak valid (misal byte 99)
+  const invalidAlgoBytes = new Uint8Array(40);
+  invalidAlgoBytes[0] = 99; // bukan 1 (GCM) dan bukan 2 (CBC)
+  invalidAlgoBytes[1] = 12; // ivLen
+  const invalidAlgoBlob = new Blob([invalidAlgoBytes]);
+  let threwInvalidAlgo = false;
+  try {
+    await unpackageFromFile(invalidAlgoBlob);
+  } catch (e) {
+    threwInvalidAlgo = true;
+  }
+  assert(threwInvalidAlgo, "Pengenal algoritma yang tidak dikenal harus melempar error validasi");
+}
+
+// ============================================================
 // JALANKAN SEMUA TEST
 // ============================================================
 async function runAllUnitTests() {
@@ -132,6 +179,8 @@ async function runAllUnitTests() {
   await test("4. Cipherteks yang diubah (tampering) ditolak", testTamperedCiphertextRejected);
   await test("5. Salt & IV selalu acak setiap enkripsi", testRandomSaltAndIV);
   await test("6. Entropi membedakan data acak vs berpola", testEntropyDistinguishesRandomness);
+  await test("7. Serialisasi round-trip Base64 dan Heksadesimal", testPackageRoundTripBase64AndHex);
+  await test("8. Validasi berkas .enc rusak / korup ditolak", testCorruptedEnvelopeRejected);
 
   return testResults;
 }

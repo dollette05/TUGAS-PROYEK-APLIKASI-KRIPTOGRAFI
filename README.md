@@ -15,46 +15,63 @@ Program Studi Informatika, Fakultas Teknik, Universitas Siliwangi
 
 ## Fitur
 
-- Enkripsi & dekripsi teks maupun berkas dengan AES-256-GCM (algoritma utama) dan AES-256-CBC (pembanding)
-- Kunci diturunkan dari kata sandi menggunakan PBKDF2 (100.000 iterasi) dengan salt acak
+- Enkripsi & dekripsi teks maupun berkas dengan **AES-256-GCM** (algoritma utama) dan **AES-256-CBC** (pembanding)
+- Kunci diturunkan dari kata sandi menggunakan **PBKDF2** (SHA-256, 100.000 iterasi) dengan salt acak CSPRNG
 - IV/nonce acak dibangkitkan untuk setiap proses enkripsi
-- Penolakan dekripsi otomatis jika kata sandi salah atau data telah diubah (verifikasi tag GCM)
-- Cipherteks dapat ditampilkan dan disalin dalam format Base64
-- Halaman pengujian dengan 5 skenario wajib: uji kebenaran, uji kecepatan, avalanche effect, entropi & histogram, serta perbandingan algoritma
+- Penolakan dekripsi otomatis jika kata sandi salah atau data telah diubah (*authenticated encryption tag failure*)
+- Validasi berkas `.enc` rusak/terpotong dengan pesan error yang jelas dan spesifik
+- Format keluaran fleksibel: mendukung representasi **Base64** dan **Heksadesimal** lengkap dengan tombol salin
+- Deteksi format otomatis saat dekripsi teks (dapat menerima masukan Base64 maupun Hex)
+- Halaman pengujian lengkap dengan 5 skenario wajib:
+  1. Uji kebenaran dekripsi (10 data uji termasuk dokumen PDF & citra PNG nyata)
+  2. Uji waktu enkripsi/dekripsi (1 KB, 1 MB, 10 MB) dengan indikator progress
+  3. Uji Avalanche Effect akurat (salt & IV tetap untuk mengukur difusi murni AES)
+  4. Uji entropi & histogram byte (perbandingan plainteks vs cipherteks)
+  5. Perbandingan algoritma (AES-GCM vs AES-CBC beserta uji tampering)
+- Fitur pengayaan edukatif: visualisasi citra mode ECB vs mode aman (AES-GCM) dengan downscale otomatis dan kunci dinamis
+- 8 unit test fungsi inti dan serialisasi yang dapat dijalankan langsung di browser
 
 ## Struktur Proyek
 
 ```
-kripto-enkripsi-modern/
-├── index.html              Halaman utama: enkripsi & dekripsi teks/berkas
-├── testing.html             Halaman pengujian (5 skenario wajib)
-├── css/style.css             Styling aplikasi
+TUGAS-PROYEK-APLIKASI-KRIPTOGRAFI/
+├── index.html                 Halaman utama: enkripsi & dekripsi teks/berkas (Base64 & Hex)
+├── testing.html               Halaman pengujian (5 skenario wajib pengujian kuantitatif)
+├── enrichment.html            Halaman pengayaan edukasi: visualisasi pola ECB vs AES-GCM
+├── css/
+│   └── style.css              Styling responsif aplikasi (Dark/Light mode)
 ├── js/
-│   ├── crypto.js             Logika inti AES-256-GCM & AES-256-CBC
-│   ├── testing.js            Logika 5 pengujian wajib
-│   └── main.js               Penghubung UI ke logika kriptografi
+│   ├── crypto.js              Logika inti kriptografi (AES-GCM, AES-CBC, PBKDF2, Hex/Base64)
+│   ├── main.js                Penghubung UI ke kriptografi, serialisasi paket, & penanganan berkas
+│   ├── testing.js             Logika 5 skenario pengujian wajib & pemuatan sampel berkas
+│   └── enrichment.js          Logika visualisasi enkripsi blok ECB vs mode aman GCM
 ├── tests/
-│   ├── unit-tests.html       Halaman untuk menjalankan unit test
-│   └── unit-tests.js         6 unit test untuk fungsi inti
-└── assets/sample-files/      Contoh berkas untuk pengujian
+│   ├── unit-tests.html        Runner unit test berbasis browser
+│   └── unit-tests.js          8 unit test untuk fungsi inti & validasi integritas
+└── assets/sample-files/
+    ├── sample-image.png       Berkas citra PNG asli untuk pengujian dekripsi
+    └── sample-document.pdf    Berkas dokumen PDF asli untuk pengujian dekripsi
 ```
 
 ## Cara Menjalankan
 
-Aplikasi ini tidak memerlukan instalasi, server, atau dependency apa pun karena seluruh logika kriptografi menggunakan **Web Crypto API** bawaan browser.
+Aplikasi ini tidak memerlukan instalasi, server backend, atau dependensi eksternal apa pun karena seluruh logika kriptografi berjalan di browser menggunakan **Web Crypto API** bawaan.
 
-1. Unduh atau clone repositori ini
+1. Unduh atau clone repositori ini:
+   ```bash
+   git clone https://github.com/dollette05/TUGAS-PROYEK-APLIKASI-KRIPTOGRAFI.git
    ```
-   git clone <url-repositori-ini>
-   ```
-2. Buka file `index.html` langsung di browser (Chrome, Firefox, Edge, atau Safari versi terbaru), **atau** jalankan lewat server statis lokal, misalnya:
-   ```
+2. Buka berkas `index.html` langsung di browser (Chrome, Firefox, Edge, atau Safari), **atau** jalankan via web server statis lokal:
+   ```bash
    npx serve .
    ```
-3. Untuk melihat hasil pengujian, buka `testing.html` lalu klik tombol **"Jalankan Semua Pengujian"**.
-4. Untuk melihat hasil unit test, buka `tests/unit-tests.html`.
+   *Catatan:* Menjalankan lewat server lokal (seperti `npx serve`) direkomendasikan agar pengujian berkas nyata pada `testing.html` dapat memuat file PDF/PNG via `fetch` tanpa hambatan kebijakan CORS berkas lokal.
+3. Untuk melihat pengujian kuantitatif, buka `testing.html` lalu klik **"Jalankan Semua Pengujian"**.
+4. Untuk melihat visualisasi citra ECB, buka `enrichment.html`.
+5. Untuk menjalankan unit test, buka `tests/unit-tests.html`.
 
-Aplikasi juga dapat diakses secara daring melalui GitHub Pages di: **(tautan GitHub Pages akan ditambahkan di sini)**
+Aplikasi ini juga dapat diakses secara daring melalui GitHub Pages di:  
+🔗 **https://dollette05.github.io/TUGAS-PROYEK-APLIKASI-KRIPTOGRAFI/**
 
 ## Contoh Penggunaan
 

@@ -202,7 +202,7 @@ let currentCipherBase64 = "";
 let currentCipherHex = "";
 let currentFormat = "base64";
 
-document.getElementById("btnEncryptText").addEventListener("click", async () => {
+document.getElementById("btnEncryptText")?.addEventListener("click", async () => {
   const text = document.getElementById("textInput").value;
   const password = document.getElementById("textPassword").value;
   hideTextError();
@@ -222,7 +222,7 @@ document.getElementById("btnEncryptText").addEventListener("click", async () => 
   }
 });
 
-document.getElementById("btnDecryptText").addEventListener("click", async () => {
+document.getElementById("btnDecryptText")?.addEventListener("click", async () => {
   const packedText = document.getElementById("textInput").value.trim();
   const password = document.getElementById("textPassword").value;
   hideTextError();
@@ -284,7 +284,7 @@ function hideTextError() {
   document.getElementById("textError").style.display = "none";
 }
 
-document.getElementById("btnCopyText").addEventListener("click", () => {
+document.getElementById("btnCopyText")?.addEventListener("click", () => {
   const el = document.getElementById("textResult");
   const btn = document.getElementById("btnCopyText");
   el.select();
@@ -302,31 +302,33 @@ document.getElementById("btnCopyText").addEventListener("click", () => {
 const dropzone = document.getElementById("dropzone");
 const fileInput = document.getElementById("fileInput");
 
-dropzone.addEventListener("click", () => fileInput.click());
-dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
-dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
-dropzone.addEventListener("drop", (e) => {
+dropzone?.addEventListener("click", () => fileInput?.click());
+dropzone?.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
+dropzone?.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+dropzone?.addEventListener("drop", (e) => {
   e.preventDefault();
   dropzone.classList.remove("dragover");
   if (e.dataTransfer.files.length) setSelectedFile(e.dataTransfer.files[0]);
 });
-fileInput.addEventListener("change", () => {
+fileInput?.addEventListener("change", () => {
   if (fileInput.files.length) setSelectedFile(fileInput.files[0]);
 });
 
 function setSelectedFile(file) {
   selectedFile = file;
-  document.getElementById("dropzoneText").textContent =
-    `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+  const dropzoneText = document.getElementById("dropzoneText");
+  if (dropzoneText) {
+    dropzoneText.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+  }
 }
 
-document.getElementById("btnEncryptFile").addEventListener("click", async () => {
-  const password = document.getElementById("filePassword").value;
+document.getElementById("btnEncryptFile")?.addEventListener("click", async () => {
+  const password = document.getElementById("filePassword")?.value;
   await handleFileOperation("encrypt", password);
 });
 
-document.getElementById("btnDecryptFile").addEventListener("click", async () => {
-  const password = document.getElementById("filePassword").value;
+document.getElementById("btnDecryptFile")?.addEventListener("click", async () => {
+  const password = document.getElementById("filePassword")?.value;
   await handleFileOperation("decrypt", password);
 });
 
