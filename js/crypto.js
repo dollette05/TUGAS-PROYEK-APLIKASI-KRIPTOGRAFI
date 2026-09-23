@@ -1,15 +1,16 @@
 /*
  * crypto.js
  * -------------------------------------------------------
- * Logika inti kriptografi: AES-256-GCM & ChaCha20-Poly1305.
+ * Logika inti kriptografi: AES-256-GCM (algoritma utama) &
+ * AES-256-CBC (algoritma pembanding).
  * Semua enkripsi/dekripsi berjalan di browser (client-side)
  * menggunakan Web Crypto API bawaan browser — tidak ada
  * data yang dikirim ke server mana pun.
  *
  * Struktur file (dibagi per section agar mudah dijelaskan):
- *   1. Fungsi Umum      -> deriveKey, konversi Base64/Hex
+ *   1. Fungsi Umum      -> deriveKey, konversi Base64 & Hex
  *   2. AES-256-GCM      -> encryptAES, decryptAES
- *   3. ChaCha20-Poly1305 -> encryptChaCha, decryptChaCha
+ *   3. AES-256-CBC      -> encryptAEScbc, decryptAEScbc
  *   4. Fungsi Terpadu   -> encryptData/decryptData (dipakai UI)
  * -------------------------------------------------------
  */
@@ -67,6 +68,19 @@ function bufferToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+/** Ubah string heksadesimal kembali menjadi ArrayBuffer. */
+function hexToBuffer(hex) {
+  const cleanHex = hex.replace(/[^0-9a-fA-F]/g, "");
+  if (cleanHex.length % 2 !== 0) {
+    throw new Error("Format heksadesimal tidak valid: panjang karakter harus genap.");
+  }
+  const bytes = new Uint8Array(cleanHex.length / 2);
+  for (let i = 0; i < cleanHex.length; i += 2) {
+    bytes[i / 2] = parseInt(cleanHex.substring(i, i + 2), 16);
+  }
+  return bytes.buffer;
 }
 
 // ============================================================
@@ -164,4 +178,16 @@ async function decryptData(payload, password, algorithm) {
   if (algorithm === "AES-GCM") return decryptAES(payload, password);
   if (algorithm === "AES-CBC") return decryptAEScbc(payload, password);
   throw new Error("Algoritma tidak dikenali: " + algorithm);
+}
+
+/**
+ * Enkripsi dengan salt dan IV yang ditentukan secara eksplisit.
+ * Khusus digunakan pada uji Avalanche Effect agar perbedaan
+ * bit cipherteks murni merefleksikan efek perubahan 1 bit pada
+ * plainteks atau kunci, bukan karena salt/IV acak yang berbeda.
+ */
+async function encryptWithFixedSaltIV(dataBuffer, password, algorithm, salt, iv) {
+  const key = await deriveKey(password, salt, algorithm, 256);
+  const ciphertext = await crypto.subtle.encrypt({ name: algorithm, iv }, key, dataBuffer);
+  return { algorithm, salt, iv, ciphertext };
 }
