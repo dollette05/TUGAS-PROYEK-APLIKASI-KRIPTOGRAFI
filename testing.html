@@ -64,8 +64,12 @@
       <h3>3. Uji Avalanche Effect</h3>
       <p class="desc">Persentase bit cipherteks yang berubah ketika 1 bit plainteks atau kunci diubah (menggunakan salt &amp; IV tetap agar murni mengukur difusi AES). Idealnya mendekati ~50%.</p>
       <div id="avalancheResult" style="display:none">
-        <div class="metric-row"><span class="metric-label">Perubahan 1 bit plainteks</span><span id="avaPlain"></span></div>
-        <div class="metric-row"><span class="metric-label">Perubahan 1 karakter kunci</span><span id="avaKey"></span></div>
+        <div class="metric-row"><span class="metric-label">Perubahan 1 bit plainteks (AES-256-CBC — Mode Blok)</span><span id="avaPlainCBC" class="pass"></span></div>
+        <div class="metric-row"><span class="metric-label">Perubahan 1 bit plainteks (AES-256-GCM — Mode Stream/CTR)</span><span id="avaPlain"></span></div>
+        <div class="metric-row"><span class="metric-label">Perubahan 1 karakter kunci (AES-256-GCM via PBKDF2)</span><span id="avaKey" class="pass"></span></div>
+        <p class="hint" style="margin-top:10px; font-size:11.5px; line-height:1.5;">
+          💡 <strong>Analisis Kriptografi:</strong> Pada mode blok (CBC), perubahan 1 bit plainteks menyebar ke seluruh blok (~50% avalanche effect). Pada mode CTR/GCM (stream cipher), perubahan 1 bit plainteks terlokalisasi pada bit aliran terkait ditambah variasi 128-bit authentication tag; sebaliknya, perubahan kunci menghasilkan efek avalanche penuh (~50%).
+        </p>
       </div>
     </section>
 
@@ -144,9 +148,12 @@ async function runAndShowSpeed() {
 }
 
 async function runAndShowAvalanche() {
-  const r = await runAvalancheTest("AES-GCM");
-  document.getElementById("avaPlain").textContent = r.plaintextAvalanche.toFixed(2) + "%";
-  document.getElementById("avaKey").textContent = r.keyAvalanche.toFixed(2) + "%";
+  const rGCM = await runAvalancheTest("AES-GCM");
+  const rCBC = await runAvalancheTest("AES-CBC");
+
+  document.getElementById("avaPlainCBC").textContent = rCBC.plaintextAvalanche.toFixed(2) + "%";
+  document.getElementById("avaPlain").textContent = rGCM.plaintextAvalanche.toFixed(2) + "%";
+  document.getElementById("avaKey").textContent = rGCM.keyAvalanche.toFixed(2) + "%";
   document.getElementById("avalancheResult").style.display = "";
 }
 

@@ -16,30 +16,34 @@ let selectedFile = null;
 // TOGGLE ALGORITMA & MODE
 // ============================================================
 
-document.querySelectorAll(".algo-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".algo-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    currentAlgorithm = btn.dataset.algo;
+if (typeof document !== "undefined") {
+  document.querySelectorAll(".algo-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".algo-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentAlgorithm = btn.dataset.algo;
+    });
   });
-});
 
-document.querySelectorAll(".mode-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".mode-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    currentMode = btn.dataset.mode;
-    document.getElementById("modeTextPanel").style.display = currentMode === "text" ? "" : "none";
-    document.getElementById("modeFilePanel").style.display = currentMode === "file" ? "" : "none";
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".mode-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentMode = btn.dataset.mode;
+      const textPanel = document.getElementById("modeTextPanel");
+      const filePanel = document.getElementById("modeFilePanel");
+      if (textPanel) textPanel.style.display = currentMode === "text" ? "" : "none";
+      if (filePanel) filePanel.style.display = currentMode === "file" ? "" : "none";
+    });
   });
-});
 
-document.querySelectorAll(".pw-toggle").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const input = document.getElementById(btn.dataset.target);
-    input.type = input.type === "password" ? "text" : "password";
+  document.querySelectorAll(".pw-toggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target);
+      if (input) input.type = input.type === "password" ? "text" : "password";
+    });
   });
-});
+}
 
 // ============================================================
 // SERIALISASI HASIL ENKRIPSI (agar bisa disimpan sebagai teks/file)
@@ -202,42 +206,44 @@ let currentCipherBase64 = "";
 let currentCipherHex = "";
 let currentFormat = "base64";
 
-document.getElementById("btnEncryptText")?.addEventListener("click", async () => {
-  const text = document.getElementById("textInput").value;
-  const password = document.getElementById("textPassword").value;
-  hideTextError();
+if (typeof document !== "undefined") {
+  document.getElementById("btnEncryptText")?.addEventListener("click", async () => {
+    const text = document.getElementById("textInput").value;
+    const password = document.getElementById("textPassword").value;
+    hideTextError();
 
-  if (!text || !password) return showTextError("Teks dan kata sandi wajib diisi.");
+    if (!text || !password) return showTextError("Teks dan kata sandi wajib diisi.");
 
-  try {
-    const dataBuffer = new TextEncoder().encode(text).buffer;
-    const result = await encryptData(dataBuffer, password, currentAlgorithm);
-    
-    currentCipherBase64 = packageToBase64(result);
-    currentCipherHex = packageToHex(result);
+    try {
+      const dataBuffer = new TextEncoder().encode(text).buffer;
+      const result = await encryptData(dataBuffer, password, currentAlgorithm);
+      
+      currentCipherBase64 = packageToBase64(result);
+      currentCipherHex = packageToHex(result);
 
-    showEncryptedTextResult(result.algorithm);
-  } catch (err) {
-    showTextError(err.message);
-  }
-});
+      showEncryptedTextResult(result.algorithm);
+    } catch (err) {
+      showTextError(err.message);
+    }
+  });
 
-document.getElementById("btnDecryptText")?.addEventListener("click", async () => {
-  const packedText = document.getElementById("textInput").value.trim();
-  const password = document.getElementById("textPassword").value;
-  hideTextError();
+  document.getElementById("btnDecryptText")?.addEventListener("click", async () => {
+    const packedText = document.getElementById("textInput").value.trim();
+    const password = document.getElementById("textPassword").value;
+    hideTextError();
 
-  if (!packedText || !password) return showTextError("Cipherteks dan kata sandi wajib diisi.");
+    if (!packedText || !password) return showTextError("Cipherteks dan kata sandi wajib diisi.");
 
-  try {
-    const payload = unpackageFromText(packedText);
-    const plainBuffer = await decryptData(payload, password, payload.algorithm);
-    const plainText = new TextDecoder().decode(plainBuffer);
-    showDecryptedTextResult(plainText, payload.algorithm);
-  } catch (err) {
-    showTextError(err.message || "Dekripsi gagal: kata sandi salah, format tidak valid, atau data telah diubah.");
-  }
-});
+    try {
+      const payload = unpackageFromText(packedText);
+      const plainBuffer = await decryptData(payload, password, payload.algorithm);
+      const plainText = new TextDecoder().decode(plainBuffer);
+      showDecryptedTextResult(plainText, payload.algorithm);
+    } catch (err) {
+      showTextError(err.message || "Dekripsi gagal: kata sandi salah, format tidak valid, atau data telah diubah.");
+    }
+  });
+}
 
 function showEncryptedTextResult(algorithm) {
   document.getElementById("textResultBox").style.display = "";
@@ -270,49 +276,69 @@ function setFormat(fmt) {
   }
 }
 
-document.getElementById("btnFmtBase64")?.addEventListener("click", () => setFormat("base64"));
-document.getElementById("btnFmtHex")?.addEventListener("click", () => setFormat("hex"));
+if (typeof document !== "undefined") {
+  document.getElementById("btnFmtBase64")?.addEventListener("click", () => setFormat("base64"));
+  document.getElementById("btnFmtHex")?.addEventListener("click", () => setFormat("hex"));
+}
 
 function showTextError(msg) {
   const box = document.getElementById("textError");
-  box.style.display = "";
-  box.textContent = msg;
-  document.getElementById("textResultBox").style.display = "none";
+  if (box) {
+    box.style.display = "";
+    box.textContent = msg;
+  }
+  const resultBox = document.getElementById("textResultBox");
+  if (resultBox) resultBox.style.display = "none";
 }
 
 function hideTextError() {
-  document.getElementById("textError").style.display = "none";
+  const box = document.getElementById("textError");
+  if (box) box.style.display = "none";
 }
 
-document.getElementById("btnCopyText")?.addEventListener("click", () => {
-  const el = document.getElementById("textResult");
-  const btn = document.getElementById("btnCopyText");
-  el.select();
-  navigator.clipboard.writeText(el.value);
+if (typeof document !== "undefined") {
+  document.getElementById("btnCopyText")?.addEventListener("click", () => {
+    const el = document.getElementById("textResult");
+    const btn = document.getElementById("btnCopyText");
+    if (el) el.select();
+    if (el) navigator.clipboard.writeText(el.value);
 
-  const prevText = btn.textContent;
-  btn.textContent = "Tersalin!";
-  setTimeout(() => { btn.textContent = prevText; }, 1500);
-});
+    if (btn) {
+      const prevText = btn.textContent;
+      btn.textContent = "Tersalin!";
+      setTimeout(() => { btn.textContent = prevText; }, 1500);
+    }
+  });
 
-// ============================================================
-// MODE BERKAS
-// ============================================================
+  // ============================================================
+  // MODE BERKAS
+  // ============================================================
 
-const dropzone = document.getElementById("dropzone");
-const fileInput = document.getElementById("fileInput");
+  const dropzone = document.getElementById("dropzone");
+  const fileInput = document.getElementById("fileInput");
 
-dropzone?.addEventListener("click", () => fileInput?.click());
-dropzone?.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
-dropzone?.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
-dropzone?.addEventListener("drop", (e) => {
-  e.preventDefault();
-  dropzone.classList.remove("dragover");
-  if (e.dataTransfer.files.length) setSelectedFile(e.dataTransfer.files[0]);
-});
-fileInput?.addEventListener("change", () => {
-  if (fileInput.files.length) setSelectedFile(fileInput.files[0]);
-});
+  dropzone?.addEventListener("click", () => fileInput?.click());
+  dropzone?.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
+  dropzone?.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+  dropzone?.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("dragover");
+    if (e.dataTransfer.files.length) setSelectedFile(e.dataTransfer.files[0]);
+  });
+  fileInput?.addEventListener("change", () => {
+    if (fileInput.files.length) setSelectedFile(fileInput.files[0]);
+  });
+
+  document.getElementById("btnEncryptFile")?.addEventListener("click", async () => {
+    const password = document.getElementById("filePassword")?.value;
+    await handleFileOperation("encrypt", password);
+  });
+
+  document.getElementById("btnDecryptFile")?.addEventListener("click", async () => {
+    const password = document.getElementById("filePassword")?.value;
+    await handleFileOperation("decrypt", password);
+  });
+}
 
 function setSelectedFile(file) {
   selectedFile = file;
@@ -321,16 +347,6 @@ function setSelectedFile(file) {
     dropzoneText.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
   }
 }
-
-document.getElementById("btnEncryptFile")?.addEventListener("click", async () => {
-  const password = document.getElementById("filePassword")?.value;
-  await handleFileOperation("encrypt", password);
-});
-
-document.getElementById("btnDecryptFile")?.addEventListener("click", async () => {
-  const password = document.getElementById("filePassword")?.value;
-  await handleFileOperation("decrypt", password);
-});
 
 async function handleFileOperation(operation, password) {
   hideFileMessages();
