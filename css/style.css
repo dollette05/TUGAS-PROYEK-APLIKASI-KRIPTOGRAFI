@@ -98,7 +98,19 @@ textarea, input[type="password"], input[type="text"] {
   font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
   background: rgba(79,140,255,0.15); color: var(--accent);
 }
-.btn-copy { flex: none; padding: 6px 12px; font-size: 12.5px; background: var(--bg); border: 1px solid var(--border); color: var(--text); }
+.btn-copy { flex: none; padding: 6px 12px; font-size: 12.5px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; cursor: pointer; }
+.btn-copy:hover { filter: brightness(1.2); }
+
+.format-toggle { display: inline-flex; gap: 4px; }
+.btn-fmt {
+  font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent; color: var(--muted);
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-fmt.active {
+  border-color: var(--accent); color: var(--accent);
+  background: rgba(79, 140, 255, 0.15);
+}
 
 .error-box, .success-box, .progress-box {
   margin-top: 14px; padding: 12px 14px; border-radius: 10px; font-size: 13.5px; line-height: 1.5;

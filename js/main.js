@@ -45,7 +45,26 @@ document.querySelectorAll(".pw-toggle").forEach((btn) => {
 // SERIALISASI HASIL ENKRIPSI (agar bisa disimpan sebagai teks/file)
 // ============================================================
 
-/** Gabungkan salt + iv + ciphertext jadi satu paket Base64 (untuk mode teks). */
+/** Konversi hasil enkripsi menjadi Uint8Array biner standar [algoByte, ivLen, salt, iv, ct]. */
+function packageToBytes(result) {
+  const salt = new Uint8Array(result.salt);   // 16 byte
+  const iv = new Uint8Array(result.iv);       // 12 byte (GCM) atau 16 byte (CBC)
+  const ct = new Uint8Array(result.ciphertext);
+
+  const algoByte = result.algorithm === "AES-GCM" ? 1 : 2;
+  const ivLen = iv.length;
+  const totalLength = 2 + salt.length + iv.length + ct.length;
+  const out = new Uint8Array(totalLength);
+
+  out[0] = algoByte;
+  out[1] = ivLen;
+  out.set(salt, 2);
+  out.set(iv, 2 + salt.length);
+  out.set(ct, 2 + salt.length + iv.length);
+  return out;
+}
+
+/** Gabungkan salt + iv + ciphertext jadi satu paket Base64 (JSON envelope). */
 function packageToBase64(result) {
   const packet = {
     algo: result.algorithm,
@@ -56,34 +75,118 @@ function packageToBase64(result) {
   return btoa(JSON.stringify(packet));
 }
 
+/** Gabungkan salt + iv + ciphertext jadi string Heksadesimal kompak. */
+function packageToHex(result) {
+  return bufferToHex(packageToBytes(result).buffer);
+}
+
+/** Parse teks cipherteks (otomatis mendeteksi format Base64 atau Heksadesimal). */
+function unpackageFromText(rawText) {
+  const text = (rawText || "").trim();
+  if (!text) throw new Error("Cipherteks tidak boleh kosong.");
+
+  // Deteksi 1: Format Hexadesimal murni (hanya karakter 0-9a-fA-F, panjang genap)
+  const isHex = /^[0-9a-fA-F]+$/.test(text) && text.length % 2 === 0;
+  if (isHex) {
+    try {
+      const buffer = hexToBuffer(text);
+      const bytes = new Uint8Array(buffer);
+      if (bytes.length >= 30) {
+        const algoCode = bytes[0];
+        if (algoCode === 1 || algoCode === 2) {
+          const algorithm = algoCode === 1 ? "AES-GCM" : "AES-CBC";
+          const ivLen = bytes[1];
+          const expectedIvLen = algorithm === "AES-GCM" ? 12 : 16;
+          if (ivLen === expectedIvLen && bytes.length >= 2 + 16 + ivLen) {
+            const salt = bytes.slice(2, 18).buffer;
+            const iv = bytes.slice(18, 18 + ivLen).buffer;
+            const ciphertext = bytes.slice(18 + ivLen).buffer;
+            return { algorithm, salt, iv, ciphertext };
+          }
+        }
+      }
+      // Opsi cadangan: Hex dari string JSON
+      const jsonStr = new TextDecoder().decode(buffer);
+      const packet = JSON.parse(jsonStr);
+      if (packet.algo && packet.salt && packet.iv && packet.data) {
+        return {
+          algorithm: packet.algo,
+          salt: base64ToBuffer(packet.salt),
+          iv: base64ToBuffer(packet.iv),
+          ciphertext: base64ToBuffer(packet.data),
+        };
+      }
+    } catch (_) {}
+  }
+
+  // Deteksi 2: Format Base64 JSON
+  try {
+    const jsonStr = atob(text);
+    const packet = JSON.parse(jsonStr);
+    if (packet.algo && packet.salt && packet.iv && packet.data) {
+      return {
+        algorithm: packet.algo,
+        salt: base64ToBuffer(packet.salt),
+        iv: base64ToBuffer(packet.iv),
+        ciphertext: base64ToBuffer(packet.data),
+      };
+    }
+  } catch (_) {}
+
+  // Deteksi 3: Base64 dari binary envelope [algo, ivLen, salt, iv, ct]
+  try {
+    const buf = base64ToBuffer(text);
+    const bytes = new Uint8Array(buf);
+    if (bytes.length >= 30 && (bytes[0] === 1 || bytes[0] === 2)) {
+      const algorithm = bytes[0] === 1 ? "AES-GCM" : "AES-CBC";
+      const ivLen = bytes[1];
+      const salt = bytes.slice(2, 18).buffer;
+      const iv = bytes.slice(18, 18 + ivLen).buffer;
+      const ciphertext = bytes.slice(18 + ivLen).buffer;
+      return { algorithm, salt, iv, ciphertext };
+    }
+  } catch (_) {}
+
+  throw new Error("Format cipherteks tidak dikenali. Pastikan menempel string Base64 atau Heksadesimal yang valid.");
+}
+
+/** Kompatibilitas mundur: unpackageFromBase64 mengarahkan ke unpackageFromText. */
 function unpackageFromBase64(packedText) {
-  const packet = JSON.parse(atob(packedText));
-  return {
-    algorithm: packet.algo,
-    salt: base64ToBuffer(packet.salt),
-    iv: base64ToBuffer(packet.iv),
-    ciphertext: base64ToBuffer(packet.data),
-  };
+  return unpackageFromText(packedText);
 }
 
 /** Gabungkan salt + iv + ciphertext jadi satu file biner (untuk mode berkas). */
 function packageToBlob(result) {
-  const salt = new Uint8Array(result.salt);   // 16 byte
-  const iv = new Uint8Array(result.iv);       // 12 atau 16 byte tergantung algoritma
-  const ct = new Uint8Array(result.ciphertext);
-
-  const algoByte = new Uint8Array([result.algorithm === "AES-GCM" ? 1 : 2]);
-  const ivLenByte = new Uint8Array([iv.length]);
-
-  return new Blob([algoByte, ivLenByte, salt, iv, ct]);
+  return new Blob([packageToBytes(result)]);
 }
 
+/** Baca file .enc dengan validasi integritas header yang ketat. */
 async function unpackageFromFile(file) {
+  if (!file) throw new Error("Berkas tidak dipilih.");
+  if (file.size < 34) {
+    throw new Error("Format berkas .enc rusak atau tidak valid: ukuran berkas terlalu kecil.");
+  }
+
   const buffer = await file.arrayBuffer();
   const bytes = new Uint8Array(buffer);
 
-  const algorithm = bytes[0] === 1 ? "AES-GCM" : "AES-CBC";
+  const algoCode = bytes[0];
+  if (algoCode !== 1 && algoCode !== 2) {
+    throw new Error("Format berkas .enc rusak: pengenal algoritma tidak valid (harus 1 untuk GCM atau 2 untuk CBC).");
+  }
+  const algorithm = algoCode === 1 ? "AES-GCM" : "AES-CBC";
+
   const ivLen = bytes[1];
+  const expectedIvLen = algorithm === "AES-GCM" ? 12 : 16;
+  if (ivLen !== expectedIvLen) {
+    throw new Error(`Format berkas .enc rusak: panjang IV (${ivLen} byte) tidak sesuai untuk ${algorithm}.`);
+  }
+
+  const minExpectedLength = 2 + 16 + ivLen + (algorithm === "AES-GCM" ? 16 : 1);
+  if (bytes.length < minExpectedLength) {
+    throw new Error("Format berkas .enc rusak atau terpotong: data cipherteks tidak lengkap.");
+  }
+
   const salt = bytes.slice(2, 18).buffer;
   const iv = bytes.slice(18, 18 + ivLen).buffer;
   const ciphertext = bytes.slice(18 + ivLen).buffer;
@@ -95,6 +198,10 @@ async function unpackageFromFile(file) {
 // MODE TEKS
 // ============================================================
 
+let currentCipherBase64 = "";
+let currentCipherHex = "";
+let currentFormat = "base64";
+
 document.getElementById("btnEncryptText").addEventListener("click", async () => {
   const text = document.getElementById("textInput").value;
   const password = document.getElementById("textPassword").value;
@@ -105,8 +212,11 @@ document.getElementById("btnEncryptText").addEventListener("click", async () => 
   try {
     const dataBuffer = new TextEncoder().encode(text).buffer;
     const result = await encryptData(dataBuffer, password, currentAlgorithm);
-    const packed = packageToBase64(result);
-    showTextResult(packed, result.algorithm);
+    
+    currentCipherBase64 = packageToBase64(result);
+    currentCipherHex = packageToHex(result);
+
+    showEncryptedTextResult(result.algorithm);
   } catch (err) {
     showTextError(err.message);
   }
@@ -120,20 +230,48 @@ document.getElementById("btnDecryptText").addEventListener("click", async () => 
   if (!packedText || !password) return showTextError("Cipherteks dan kata sandi wajib diisi.");
 
   try {
-    const payload = unpackageFromBase64(packedText);
+    const payload = unpackageFromText(packedText);
     const plainBuffer = await decryptData(payload, password, payload.algorithm);
     const plainText = new TextDecoder().decode(plainBuffer);
-    showTextResult(plainText, payload.algorithm);
+    showDecryptedTextResult(plainText, payload.algorithm);
   } catch (err) {
-    showTextError("Dekripsi gagal: kata sandi salah, format tidak valid, atau data telah diubah.");
+    showTextError(err.message || "Dekripsi gagal: kata sandi salah, format tidak valid, atau data telah diubah.");
   }
 });
 
-function showTextResult(content, algorithm) {
+function showEncryptedTextResult(algorithm) {
   document.getElementById("textResultBox").style.display = "";
   document.getElementById("textResultBadge").textContent = getAlgorithmDisplayName(algorithm);
-  document.getElementById("textResult").value = content;
+  document.getElementById("formatToggle").style.display = "inline-flex";
+
+  setFormat(currentFormat);
 }
+
+function showDecryptedTextResult(plainText, algorithm) {
+  document.getElementById("textResultBox").style.display = "";
+  document.getElementById("textResultBadge").textContent = getAlgorithmDisplayName(algorithm) + " (Plainteks)";
+  document.getElementById("formatToggle").style.display = "none";
+  document.getElementById("textResult").value = plainText;
+}
+
+function setFormat(fmt) {
+  currentFormat = fmt;
+  const btnB64 = document.getElementById("btnFmtBase64");
+  const btnHex = document.getElementById("btnFmtHex");
+
+  if (fmt === "base64") {
+    btnB64.classList.add("active");
+    btnHex.classList.remove("active");
+    document.getElementById("textResult").value = currentCipherBase64;
+  } else {
+    btnHex.classList.add("active");
+    btnB64.classList.remove("active");
+    document.getElementById("textResult").value = currentCipherHex;
+  }
+}
+
+document.getElementById("btnFmtBase64")?.addEventListener("click", () => setFormat("base64"));
+document.getElementById("btnFmtHex")?.addEventListener("click", () => setFormat("hex"));
 
 function showTextError(msg) {
   const box = document.getElementById("textError");
@@ -148,8 +286,13 @@ function hideTextError() {
 
 document.getElementById("btnCopyText").addEventListener("click", () => {
   const el = document.getElementById("textResult");
+  const btn = document.getElementById("btnCopyText");
   el.select();
   navigator.clipboard.writeText(el.value);
+
+  const prevText = btn.textContent;
+  btn.textContent = "Tersalin!";
+  setTimeout(() => { btn.textContent = prevText; }, 1500);
 });
 
 // ============================================================

@@ -25,9 +25,9 @@
       <h2>Algoritma</h2>
       <div class="algo-toggle" id="algoToggle">
         <button class="algo-btn active" data-algo="AES-GCM">AES-256-GCM</button>
-        <button class="algo-btn" data-algo="AES-CBC">AES-256-CBC</button>
+        <button class="algo-btn" data-algo="AES-CBC">AES-256-CBC (Pembanding)</button>
       </div>
-      <p class="hint">AES-GCM adalah algoritma utama yang direkomendasikan (memverifikasi keutuhan data). AES-CBC disediakan sebagai pembanding pada halaman Pengujian.</p>
+      <p class="hint">AES-GCM adalah algoritma utama yang direkomendasikan (memverifikasi keutuhan data &amp; anti-tampering). AES-CBC disediakan sebagai pembanding (tanpa autentikasi bawaan — tidak disarankan untuk data sensitif).</p>
     </section>
 
     <!-- Mode: teks atau berkas -->
@@ -40,7 +40,7 @@
       <!-- ==== MODE TEKS ==== -->
       <div id="modeTextPanel" class="mode-panel">
         <label class="field-label">Teks / Cipherteks</label>
-        <textarea id="textInput" rows="5" placeholder="Ketik teks yang ingin dienkripsi, atau tempel cipherteks (Base64) untuk didekripsi..."></textarea>
+        <textarea id="textInput" rows="5" placeholder="Ketik teks yang ingin dienkripsi, atau tempel cipherteks (format Base64 atau Hex) untuk didekripsi..."></textarea>
 
         <label class="field-label">Kata Sandi</label>
         <div class="pw-field">
@@ -55,7 +55,13 @@
 
         <div id="textResultBox" class="result-box" style="display:none">
           <div class="result-header">
-            <span id="textResultBadge" class="badge"></span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="textResultBadge" class="badge"></span>
+              <div class="format-toggle" id="formatToggle" style="display:none">
+                <button class="btn-fmt active" id="btnFmtBase64" type="button">Base64</button>
+                <button class="btn-fmt" id="btnFmtHex" type="button">Hex</button>
+              </div>
+            </div>
             <button id="btnCopyText" class="btn-copy">Salin</button>
           </div>
           <textarea id="textResult" rows="5" readonly></textarea>
