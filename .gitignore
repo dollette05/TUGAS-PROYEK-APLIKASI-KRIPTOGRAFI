@@ -1,13 +1,44 @@
+# Spesifikasi tugas internal (jangan ikut ter-commit ke repo publik)
+spesifikasi_produk_web_kriptografi.md
+
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Editor
+# Editor / IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # Log
 *.log
+npm-debug.log*
 
-# Hasil enkripsi contoh (jangan ikut ter-commit jika ada file uji pribadi)
+# Secrets & kunci — WAJIB tidak ter-commit (Baseline Security Rules)
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*_private*
+*_secret*
+secrets.json
+
+# Hasil enkripsi / uji pribadi (jangan ikut ter-commit)
 *.enc
+*.dec
+output/
+outputs/
+test-results/
+*.xlsx
+
+# File sementara / upload lokal
+*.tmp
+*.temp
+
+
+
