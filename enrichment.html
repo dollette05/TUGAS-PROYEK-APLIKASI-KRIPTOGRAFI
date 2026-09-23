@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visualisasi ECB vs Mode Aman</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .canvas-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
+  @media (min-width: 700px) { .canvas-grid { grid-template-columns: 1fr 1fr 1fr; } }
+  .canvas-box { text-align: center; }
+  .canvas-box canvas { max-width: 100%; border: 1px solid var(--border); border-radius: 8px; }
+  .canvas-box p { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">🔐 Brankas Digital</div>
+    <nav class="topnav">
+      <a href="index.html">Enkripsi &amp; Dekripsi</a>
+      <a href="testing.html">Pengujian</a>
+      <a href="enrichment.html" class="active">Visualisasi ECB</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="panel">
+      <h2>Enkripsi Citra: Mode ECB vs Mode Aman (GCM)</h2>
+      <p class="hint">Mode ECB mengenkripsi tiap blok data secara independen, sehingga pola berulang pada gambar asli (misalnya area warna solid) tetap terlihat pada hasil enkripsi. Mode GCM menghasilkan output yang sepenuhnya acak tanpa pola.</p>
+
+      <label class="field-label">Pilih Gambar</label>
+      <input type="file" id="imageInput" accept="image/*">
+
+      <div class="btn-row">
+        <button class="btn-primary" id="btnProcess">Proses &amp; Bandingkan</button>
+      </div>
+
+      <div class="canvas-grid" id="resultGrid" style="display:none">
+        <div class="canvas-box">
+          <canvas id="canvasOriginal"></canvas>
+          <p>Gambar Asli</p>
+        </div>
+        <div class="canvas-box">
+          <canvas id="canvasECB"></canvas>
+          <p>Dienkripsi mode ECB — pola masih terlihat</p>
+        </div>
+        <div class="canvas-box">
+          <canvas id="canvasSecure"></canvas>
+          <p>Dienkripsi mode GCM — sepenuhnya acak</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="js/crypto.js"></script>
+<script src="js/enrichment.js"></script>
+<script>
+document.getElementById("btnProcess").addEventListener("click", async () => {
+  const file = document.getElementById("imageInput").files[0];
+  if (!file) return alert("Pilih gambar terlebih dahulu.");
+
+  const img = await loadImage(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const rawBytes = new Uint8Array(imageData.data.buffer.slice(0));
+
+  // Kunci demo tetap (khusus fitur visualisasi ini, bukan untuk data sungguhan)
+  const password = "demo-visual-ecb";
+  const salt = new TextEncoder().encode("salt-tetap-16by");
+  const keyCBC = await deriveKey(password, salt, "AES-CBC", 256);
+  const keyGCM = await deriveKey(password, salt, "AES-GCM", 256);
+
+  const ecbBytes = await encryptImageECB(keyCBC, rawBytes);
+  const secureBytes = await encryptImageSecure(keyGCM, rawBytes);
+
+  drawResult("canvasOriginal", imageData, canvas.width, canvas.height);
+  drawResult("canvasECB", makeImageData(ecbBytes, canvas.width, canvas.height), canvas.width, canvas.height);
+  drawResult("canvasSecure", makeImageData(secureBytes, canvas.width, canvas.height), canvas.width, canvas.height);
+
+  document.getElementById("resultGrid").style.display = "";
+});
+
+function loadImage(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function makeImageData(bytes, width, height) {
+  // Paksa channel alpha selalu 255 agar gambar tidak tampak transparan
+  for (let i = 3; i < bytes.length; i += 4) bytes[i] = 255;
+  return new ImageData(new Uint8ClampedArray(bytes), width, height);
+}
+
+function drawResult(canvasId, imageData, width, height) {
+  const canvas = document.getElementById(canvasId);
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext("2d").putImageData(imageData, 0, 0);
+}
+</script>
+</body>
+</html>
