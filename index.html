@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Brankas Digital — Enkripsi Modern</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">🔐 Brankas Digital</div>
+    <nav class="topnav">
+      <a href="index.html" class="active">Enkripsi &amp; Dekripsi</a>
+      <a href="testing.html">Pengujian</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+
+    <!-- Pemilihan algoritma -->
+    <section class="panel">
+      <h2>Algoritma</h2>
+      <div class="algo-toggle" id="algoToggle">
+        <button class="algo-btn active" data-algo="AES-GCM">AES-256-GCM</button>
+        <button class="algo-btn" data-algo="AES-CBC">AES-256-CBC</button>
+      </div>
+      <p class="hint">AES-GCM adalah algoritma utama yang direkomendasikan (memverifikasi keutuhan data). AES-CBC disediakan sebagai pembanding pada halaman Pengujian.</p>
+    </section>
+
+    <!-- Mode: teks atau berkas -->
+    <section class="panel">
+      <div class="mode-toggle" id="modeToggle">
+        <button class="mode-btn active" data-mode="text">Teks</button>
+        <button class="mode-btn" data-mode="file">Berkas</button>
+      </div>
+
+      <!-- ==== MODE TEKS ==== -->
+      <div id="modeTextPanel" class="mode-panel">
+        <label class="field-label">Teks / Cipherteks</label>
+        <textarea id="textInput" rows="5" placeholder="Ketik teks yang ingin dienkripsi, atau tempel cipherteks (Base64) untuk didekripsi..."></textarea>
+
+        <label class="field-label">Kata Sandi</label>
+        <div class="pw-field">
+          <input type="password" id="textPassword" placeholder="Masukkan kata sandi">
+          <button class="pw-toggle" data-target="textPassword">👁</button>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-primary" id="btnEncryptText">Enkripsi</button>
+          <button class="btn-secondary" id="btnDecryptText">Dekripsi</button>
+        </div>
+
+        <div id="textResultBox" class="result-box" style="display:none">
+          <div class="result-header">
+            <span id="textResultBadge" class="badge"></span>
+            <button id="btnCopyText" class="btn-copy">Salin</button>
+          </div>
+          <textarea id="textResult" rows="5" readonly></textarea>
+        </div>
+
+        <div id="textError" class="error-box" style="display:none"></div>
+      </div>
+
+      <!-- ==== MODE BERKAS ==== -->
+      <div id="modeFilePanel" class="mode-panel" style="display:none">
+        <label class="field-label">Berkas</label>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" hidden>
+          <p id="dropzoneText">Klik atau seret berkas ke sini (gambar, PDF, atau berkas apa pun)</p>
+        </div>
+
+        <label class="field-label">Kata Sandi</label>
+        <div class="pw-field">
+          <input type="password" id="filePassword" placeholder="Masukkan kata sandi">
+          <button class="pw-toggle" data-target="filePassword">👁</button>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-primary" id="btnEncryptFile">Enkripsi &amp; Unduh</button>
+          <button class="btn-secondary" id="btnDecryptFile">Dekripsi &amp; Unduh</button>
+        </div>
+
+        <div id="fileProgress" class="progress-box" style="display:none">Memproses berkas...</div>
+        <div id="fileSuccess" class="success-box" style="display:none"></div>
+        <div id="fileError" class="error-box" style="display:none"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    Diproses sepenuhnya di browser — tidak ada data yang dikirim ke server.
+  </footer>
+
+</div>
+
+<script src="js/crypto.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

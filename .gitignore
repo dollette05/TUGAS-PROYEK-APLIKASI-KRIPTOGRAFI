@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Log
+*.log
+
+# Hasil enkripsi contoh (jangan ikut ter-commit jika ada file uji pribadi)
+*.enc

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pengujian — Brankas Digital</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .test-card { margin-bottom: 20px; }
+  .test-card h3 { font-size: 15px; margin: 0 0 4px; }
+  .test-card .desc { font-size: 12.5px; color: var(--muted); margin: 0 0 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 11.5px; }
+  .pass { color: var(--accent-2); font-weight: 700; }
+  .fail { color: var(--danger); font-weight: 700; }
+  .metric-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-label { color: var(--muted); }
+  .hist-bars { display: flex; align-items: flex-end; height: 60px; gap: 1px; margin-top: 8px; }
+  .hist-bar { flex: 1; background: var(--accent); min-width: 1px; }
+  .hist-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .compare-col { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .compare-col h4 { margin: 0 0 8px; font-size: 13.5px; }
+  .run-all { margin-bottom: 20px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">🔐 Brankas Digital</div>
+    <nav class="topnav">
+      <a href="index.html">Enkripsi &amp; Dekripsi</a>
+      <a href="testing.html" class="active">Pengujian</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <button class="btn-primary run-all" id="btnRunAll" style="width:100%">Jalankan Semua Pengujian</button>
+
+    <section class="panel test-card">
+      <h3>1. Uji Kebenaran Dekripsi</h3>
+      <p class="desc">10 data uji (teks & simulasi berkas) dienkripsi lalu didekripsi, hasilnya dibandingkan byte-demi-byte.</p>
+      <table id="correctnessTable" style="display:none">
+        <thead><tr><th>Data Uji</th><th>Ukuran</th><th>Status</th></tr></thead>
+        <tbody id="correctnessBody"></tbody>
+      </table>
+    </section>
+
+    <section class="panel test-card">
+      <h3>2. Uji Waktu Enkripsi/Dekripsi</h3>
+      <p class="desc">Waktu proses untuk berkas berukuran 1 KB, 1 MB, dan 10 MB.</p>
+      <table id="speedTable" style="display:none">
+        <thead><tr><th>Ukuran</th><th>Waktu Enkripsi</th><th>Waktu Dekripsi</th></tr></thead>
+        <tbody id="speedBody"></tbody>
+      </table>
+    </section>
+
+    <section class="panel test-card">
+      <h3>3. Uji Avalanche Effect</h3>
+      <p class="desc">Persentase bit cipherteks yang berubah ketika 1 bit plainteks atau kunci diubah. Idealnya mendekati 50%.</p>
+      <div id="avalancheResult" style="display:none">
+        <div class="metric-row"><span class="metric-label">Perubahan 1 bit plainteks</span><span id="avaPlain"></span></div>
+        <div class="metric-row"><span class="metric-label">Perubahan 1 karakter kunci</span><span id="avaKey"></span></div>
+      </div>
+    </section>
+
+    <section class="panel test-card">
+      <h3>4. Uji Entropi &amp; Histogram Byte</h3>
+      <p class="desc">Entropi mengukur "keacakan" data (0-8 bit). Cipherteks yang aman seharusnya mendekati 8 dan histogramnya rata.</p>
+      <div id="entropyResult" style="display:none">
+        <div class="metric-row"><span class="metric-label">Entropi Plainteks</span><span id="entPlain"></span></div>
+        <div class="metric-row"><span class="metric-label">Entropi Cipherteks</span><span id="entCipher"></span></div>
+        <div class="hist-label">Histogram Plainteks (byte 0-255)</div>
+        <div class="hist-bars" id="histPlain"></div>
+        <div class="hist-label">Histogram Cipherteks (byte 0-255)</div>
+        <div class="hist-bars" id="histCipher"></div>
+      </div>
+    </section>
+
+    <section class="panel test-card">
+      <h3>5. Perbandingan Algoritma</h3>
+      <p class="desc">AES-256-GCM vs AES-256-CBC pada berkas 1 MB, termasuk uji ketahanan terhadap perubahan 1 byte cipherteks.</p>
+      <div id="comparisonResult" style="display:none" class="compare-grid"></div>
+    </section>
+  </main>
+</div>
+
+<script src="js/crypto.js"></script>
+<script src="js/testing.js"></script>
+<script>
+document.getElementById("btnRunAll").addEventListener("click", async () => {
+  const btn = document.getElementById("btnRunAll");
+  btn.disabled = true;
+  btn.textContent = "Menjalankan pengujian...";
+
+  await runAndShowCorrectness();
+  await runAndShowSpeed();
+  await runAndShowAvalanche();
+  await runAndShowEntropy();
+  await runAndShowComparison();
+
+  btn.disabled = false;
+  btn.textContent = "Jalankan Ulang Semua Pengujian";
+});
+
+async function runAndShowCorrectness() {
+  const results = await runCorrectnessTest("AES-GCM");
+  const body = document.getElementById("correctnessBody");
+  body.innerHTML = "";
+  results.forEach((r) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${r.name}</td><td>${r.size.toLocaleString("id-ID")} B</td>
+      <td class="${r.pass ? "pass" : "fail"}">${r.pass ? "LULUS" : "GAGAL"}</td>`;
+    body.appendChild(tr);
+  });
+  document.getElementById("correctnessTable").style.display = "";
+}
+
+async function runAndShowSpeed() {
+  const results = await runSpeedTest("AES-GCM");
+  const body = document.getElementById("speedBody");
+  body.innerHTML = "";
+  results.forEach((r) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${r.label}</td><td>${r.encryptMs.toFixed(2)} ms</td><td>${r.decryptMs.toFixed(2)} ms</td>`;
+    body.appendChild(tr);
+  });
+  document.getElementById("speedTable").style.display = "";
+}
+
+async function runAndShowAvalanche() {
+  const r = await runAvalancheTest("AES-GCM");
+  document.getElementById("avaPlain").textContent = r.plaintextAvalanche.toFixed(2) + "%";
+  document.getElementById("avaKey").textContent = r.keyAvalanche.toFixed(2) + "%";
+  document.getElementById("avalancheResult").style.display = "";
+}
+
+function renderHistogram(containerId, freq) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+  const max = Math.max(...freq, 1);
+  // Kelompokkan 256 nilai jadi 64 batang agar tetap ringan ditampilkan
+  for (let i = 0; i < 64; i++) {
+    const group = freq.slice(i * 4, i * 4 + 4).reduce((a, b) => a + b, 0);
+    const bar = document.createElement("div");
+    bar.className = "hist-bar";
+    bar.style.height = Math.max(2, (group / (max * 4)) * 60) + "px";
+    container.appendChild(bar);
+  }
+}
+
+async function runAndShowEntropy() {
+  const r = await runEntropyTest("AES-GCM");
+  document.getElementById("entPlain").textContent = r.plaintextEntropy.toFixed(3) + " bit";
+  document.getElementById("entCipher").textContent = r.ciphertextEntropy.toFixed(3) + " bit";
+  renderHistogram("histPlain", r.plaintextHistogram);
+  renderHistogram("histCipher", r.ciphertextHistogram);
+  document.getElementById("entropyResult").style.display = "";
+}
+
+async function runAndShowComparison() {
+  const results = await runComparisonTest();
+  const container = document.getElementById("comparisonResult");
+  container.innerHTML = "";
+  for (const [algo, r] of Object.entries(results)) {
+    const col = document.createElement("div");
+    col.className = "compare-col";
+    col.innerHTML = `
+      <h4>${getAlgorithmDisplayName(algo)}</h4>
+      <div class="metric-row"><span class="metric-label">Waktu enkripsi</span><span>${r.encryptMs.toFixed(2)} ms</span></div>
+      <div class="metric-row"><span class="metric-label">Waktu dekripsi</span><span>${r.decryptMs.toFixed(2)} ms</span></div>
+      <div class="metric-row"><span class="metric-label">Entropi cipherteks</span><span>${r.entropy.toFixed(3)} bit</span></div>
+      <div class="metric-row"><span class="metric-label">Deteksi tampering</span><span class="${r.detectsTampering ? "pass" : "fail"}">${r.detectsTampering ? "Ya" : "Tidak"}</span></div>
+    `;
+    container.appendChild(col);
+  }
+  container.style.display = "";
+}
+</script>
+</body>
+</html>
