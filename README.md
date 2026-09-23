@@ -9,9 +9,9 @@ Program Studi Informatika, Fakultas Teknik, Universitas Siliwangi
 
 | Nama | NPM |
 |---|---|
-| (nama anggota 1) | (NPM anggota 1) |
-| (nama anggota 2) | (NPM anggota 2) |
-| (nama anggota 3) | (NPM anggota 3) |
+| (NAURA AULIA PUTRI) | (247006111002) |
+| (ZASKIA JANUALITA DEVI) | (247006111009) |
+| (ZALFA MALIKUL MULQI) | (247006111117) |
 
 ## Fitur
 
