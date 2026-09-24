@@ -83,10 +83,40 @@ function randomBuffer(size) {
   return arr.buffer;
 }
 
-// Catatan keamanan: Password 'test-password-123' di file ini secara eksklusif
-// digunakan sebagai data uji fixture (benchmark kuantitatif dan unit test),
-// bukan merupakan secret / password produksi (memenuhi Baseline Security Rules).
+// Catatan keamanan: Password 'test-password-123' di file ini hanya menjadi
+// nilai bawaan (default) pada form konfigurasi pengujian — pengguna BEBAS
+// menggantinya dengan password miliknya sendiri dari halaman pengujian.
+// Ini bukan merupakan secret / password produksi (memenuhi Baseline Security).
 const TEST_PASSWORD_FIXTURE = "test-password-123";
+
+/** Format jumlah byte menjadi tampilan ramah manusia (B, KB, MB, GB). */
+function formatBytes(bytes) {
+  if (!bytes || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+  const val = bytes / Math.pow(1024, i);
+  return (i === 0 ? val.toFixed(0) : val.toFixed(2)) + " " + units[i];
+}
+
+/** Kategorikan berkas berdasarkan tipe MIME / ekstensi, untuk kolom "Kategori". */
+function categorizeFile(file) {
+  const t = (file.type || "").toLowerCase();
+  const n = (file.name || "").toLowerCase();
+  if (t.startsWith("image/")) return "Citra";
+  if (t === "application/pdf" || n.endsWith(".pdf")) return "Dokumen (PDF)";
+  if (t.startsWith("text/")) return "Teks";
+  if (/\.(docx?|xlsx?|pptx?|odt|rtf)$/.test(n)) return "Dokumen";
+  if (/\.(zip|rar|7z|tar|gz)$/.test(n)) return "Arsip";
+  if (/\.(mp3|wav|flac|mp4|mkv|webm|png|jpe?g|gif|bmp|webp)$/.test(n)) return "Media/Berkas";
+  return "Berkas";
+}
+
+/** Potong buffer agar tetap ringan untuk uji yang tidak butuh seluruh isi berkas. */
+function sliceData(data, maxBytes) {
+  if (!data) return null;
+  if (data.byteLength <= maxBytes) return data;
+  return data.slice(0, maxBytes);
+}
 
 // ============================================================
 // 1. UJI KEBENARAN DEKRIPSI (minimal 10 data uji termasuk PNG & PDF)
@@ -100,45 +130,69 @@ async function fetchSampleOrFallback(url, fallbackBytesGenerator) {
   return fallbackBytesGenerator();
 }
 
-async function buildCorrectnessTestCases() {
+async function buildCorrectnessTestCases(options = {}) {
   const enc = new TextEncoder();
 
-  // Muat berkas nyata PNG dan PDF dari assets/sample-files dengan fallback aman
-  const pngData = await fetchSampleOrFallback("assets/sample-files/sample-image.png", () => {
-    // Fallback: minimal valid 1x1 PNG bytes
-    return new Uint8Array([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
-      0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-      0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4, 0x89, 0x00, 0x00, 0x00,
-      0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
-      0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
-      0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82
-    ]).buffer;
-  });
+  // Pertama: kumpulkan masukan ASLI dari pengguna halaman pengujian
+  // (berkas yang diunggah / teks yang diketik) sebagai data uji utama.
+  const { userData = [], includeSamples = true, fillToCount = 10 } = options;
+  const cases = [];
 
-  const pdfData = await fetchSampleOrFallback("assets/sample-files/sample-document.pdf", () => {
-    // Fallback: minimal valid PDF header & body
-    return enc.encode("%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 3 3]>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n149\n%%EOF").buffer;
-  });
+  for (const item of userData) {
+    if (item && item.data && item.data.byteLength !== undefined) {
+      cases.push({
+        name: item.name,
+        category: item.category || "Masukan User",
+        data: item.data,
+      });
+    }
+  }
 
-  const cases = [
-    { name: "Teks Pendek (ASCII)", category: "Teks", data: enc.encode("Halo dunia kriptografi!").buffer },
-    { name: "Teks Panjang (Lipsum)", category: "Teks", data: enc.encode("Lorem ipsum dolor sit amet, consectetur adipiscing elit. ".repeat(60)).buffer },
-    { name: "Teks Kosong (0 Byte)", category: "Teks", data: enc.encode("").buffer },
-    { name: "Karakter Khusus & Emoji", category: "Teks (Unicode)", data: enc.encode("Data rahasia 🔒 penting! 日本語 • éàçü • @#$%^&*()").buffer },
-    { name: "Citra Asli (sample-image.png)", category: "Citra (PNG)", data: pngData },
-    { name: "Dokumen Asli (sample-document.pdf)", category: "Dokumen (PDF)", data: pdfData },
-    { name: "Simulasi Biner 1 KB", category: "Biner", data: randomBuffer(1024) },
-    { name: "Simulasi Berkas 10 KB", category: "Berkas Simulasi", data: randomBuffer(10240) },
-    { name: "Simulasi Berkas 50 KB", category: "Berkas Simulasi", data: randomBuffer(51200) },
-    { name: "Simulasi Berkas 100 KB", category: "Berkas Simulasi", data: randomBuffer(102400) },
+  // Kedua: sertakan contoh berkas asli (PNG & PDF) bila diinginkan pengguna.
+  if (includeSamples) {
+    const pngData = await fetchSampleOrFallback("assets/sample-files/sample-image.png", () => {
+      // Fallback: minimal valid 1x1 PNG bytes
+      return new Uint8Array([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+        0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+        0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4, 0x89, 0x00, 0x00, 0x00,
+        0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+        0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+        0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82
+      ]).buffer;
+    });
+
+    const pdfData = await fetchSampleOrFallback("assets/sample-files/sample-document.pdf", () => {
+      // Fallback: minimal valid PDF header & body
+      return enc.encode("%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 3 3]>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n149\n%%EOF").buffer;
+    });
+
+    cases.push({ name: "Citra Asli (sample-image.png)", category: "Citra (PNG)", data: pngData });
+    cases.push({ name: "Dokumen Asli (sample-document.pdf)", category: "Dokumen (PDF)", data: pdfData });
+  }
+
+  // Ketiga: cukupi hingga minimal 10 data uji dengan varian teks/biner standar
+  // hanya jika jumlah masukan pengguna + contoh belum mencapai minimum.
+  const fillers = [
+    { name: "Teks Pendek (ASCII)", category: "Teks", gen: () => enc.encode("Halo dunia kriptografi!").buffer },
+    { name: "Teks Panjang (Lipsum)", category: "Teks", gen: () => enc.encode("Lorem ipsum dolor sit amet, consectetur adipiscing elit. ".repeat(60)).buffer },
+    { name: "Teks Kosong (0 Byte)", category: "Teks", gen: () => enc.encode("").buffer },
+    { name: "Karakter Khusus & Emoji", category: "Teks (Unicode)", gen: () => enc.encode("Data rahasia 🔒 penting! 日本語 • éàçü • @#$%^&*()").buffer },
+    { name: "Simulasi Biner 1 KB", category: "Biner", gen: () => randomBuffer(1024) },
+    { name: "Simulasi Berkas 10 KB", category: "Berkas Simulasi", gen: () => randomBuffer(10240) },
+    { name: "Simulasi Berkas 50 KB", category: "Berkas Simulasi", gen: () => randomBuffer(51200) },
+    { name: "Simulasi Berkas 100 KB", category: "Berkas Simulasi", gen: () => randomBuffer(102400) },
   ];
+  for (const f of fillers) {
+    if (cases.length >= fillToCount) break;
+    cases.push({ name: f.name, category: f.category, data: f.gen() });
+  }
 
   return cases;
 }
 
-async function runCorrectnessTest(algorithm, password = TEST_PASSWORD_FIXTURE) {
-  const cases = await buildCorrectnessTestCases();
+async function runCorrectnessTest(algorithm, password = TEST_PASSWORD_FIXTURE, options = {}) {
+  const cases = await buildCorrectnessTestCases(options);
   const results = [];
 
   for (const { name, category, data } of cases) {
@@ -159,18 +213,19 @@ async function runCorrectnessTest(algorithm, password = TEST_PASSWORD_FIXTURE) {
 // 2. UJI WAKTU ENKRIPSI/DEKRIPSI (1 KB, 1 MB, 10 MB)
 // ============================================================
 
-async function runSpeedTest(algorithm, password = TEST_PASSWORD_FIXTURE, onProgress = null) {
-  const sizes = [
-    { label: "1 KB", bytes: 1 * 1024 },
-    { label: "1 MB", bytes: 1 * 1024 * 1024 },
-    { label: "10 MB", bytes: 10 * 1024 * 1024 },
-  ];
+async function runSpeedTest(algorithm, password = TEST_PASSWORD_FIXTURE, options = {}, onProgress = null) {
+  // Kompatibilitas mundur: bila argumen ke-3 adalah fungsi (callback progress),
+  // perlakukan seperti pemanggilan lama (algorithm, password, onProgress).
+  if (typeof options === "function") {
+    onProgress = options;
+    options = {};
+  }
+
+  const { userData = [], useStandardSizes = true } = options;
   const results = [];
 
-  for (const { label, bytes } of sizes) {
+  async function measure(label, category, data) {
     if (onProgress) onProgress(label);
-    const data = randomBuffer(bytes);
-
     const t0 = performance.now();
     const encrypted = await encryptData(data, password, algorithm);
     const t1 = performance.now();
@@ -179,10 +234,32 @@ async function runSpeedTest(algorithm, password = TEST_PASSWORD_FIXTURE, onProgr
 
     results.push({
       label,
+      category: category || "Data Acak",
+      size: data.byteLength,
       encryptMs: t1 - t0,
       decryptMs: t2 - t1,
     });
   }
+
+  // 1) Ukuran wajib sesuai spesifikasi: 1 KB, 1 MB, dan 10 MB (data acak).
+  if (useStandardSizes) {
+    const sizes = [
+      { label: "1 KB", category: "Data Acak (bawaan)", bytes: 1 * 1024 },
+      { label: "1 MB", category: "Data Acak (bawaan)", bytes: 1 * 1024 * 1024 },
+      { label: "10 MB", category: "Data Acak (bawaan)", bytes: 10 * 1024 * 1024 },
+    ];
+    for (const { label, category, bytes } of sizes) {
+      await measure(label, category, randomBuffer(bytes));
+    }
+  }
+
+  // 2) Data masukan ASLI dari pengguna (berkas/teks), diukur apa adanya.
+  for (const item of userData) {
+    if (item && item.data && item.data.byteLength !== undefined && item.data.byteLength > 0) {
+      await measure(`${item.name} (${formatBytes(item.data.byteLength)})`, item.category || "Masukan User", item.data);
+    }
+  }
+
   return results;
 }
 
@@ -190,8 +267,10 @@ async function runSpeedTest(algorithm, password = TEST_PASSWORD_FIXTURE, onProgr
 // 3. UJI AVALANCHE EFFECT (Metodologi Akurat: Salt & IV Tetap)
 // ============================================================
 
-async function runAvalancheTest(algorithm, password = TEST_PASSWORD_FIXTURE) {
-  const originalData = randomBuffer(1024);
+async function runAvalancheTest(algorithm, password = TEST_PASSWORD_FIXTURE, options = {}) {
+  // Basis uji memakai masukan ASLI pengguna bila tersedia (dipotong maks 64 KB
+  // agar uji tetap responsif untuk berkas besar); jika tidak, bangkitkan 1 KB acak.
+  const originalData = sliceData(options.data, 64 * 1024) || randomBuffer(1024);
 
   // Metodologi standar Avalanche Effect:
   // Salt dan IV harus dibuat tetap antara kedua uji, sehingga perbedaan bit
@@ -212,17 +291,27 @@ async function runAvalancheTest(algorithm, password = TEST_PASSWORD_FIXTURE) {
   const encB2 = await encryptWithFixedSaltIV(originalData, password2, algorithm, fixedSalt, fixedIV);
   const keyAvalanche = calculateBitDifference(encB1.ciphertext, encB2.ciphertext);
 
-  return { plaintextAvalanche, keyAvalanche };
+  return { plaintextAvalanche, keyAvalanche, baseSize: originalData.byteLength };
 }
 
 // ============================================================
 // 4. UJI ENTROPI & HISTOGRAM
 // ============================================================
 
-async function runEntropyTest(algorithm, password = "test-password-123") {
-  // Plaintext sengaja dibuat "tidak acak" (banyak pola berulang)
-  // supaya kontras dengan cipherteks terlihat jelas.
-  const plaintext = new TextEncoder().encode("AAAA BBBB CCCC ".repeat(200)).buffer;
+async function runEntropyTest(algorithm, password = TEST_PASSWORD_FIXTURE, options = {}) {
+  // Gunakan masukan ASLI pengguna (teks/berkas) bila disediakan.
+  // Jika tidak, pakai plaintext berpola bawaan supaya kontras dengan
+  // cipherteks tetap terlihat jelas (data acak sudah secara alami entropi tinggi).
+  let plaintext = options.data && options.data.byteLength ? options.data : null;
+  let sourceLabel;
+
+  if (!plaintext) {
+    plaintext = new TextEncoder().encode("AAAA BBBB CCCC ".repeat(200)).buffer;
+    sourceLabel = "Data berpola bawaan (tanpa masukan user)";
+  } else {
+    sourceLabel = "Masukan user (teks/berkas)";
+  }
+
   const encrypted = await encryptData(plaintext, password, algorithm);
 
   return {
@@ -230,6 +319,7 @@ async function runEntropyTest(algorithm, password = "test-password-123") {
     ciphertextEntropy: calculateEntropy(encrypted.ciphertext),
     plaintextHistogram: calculateHistogram(plaintext),
     ciphertextHistogram: calculateHistogram(encrypted.ciphertext),
+    sourceLabel,
   };
 }
 
@@ -237,8 +327,14 @@ async function runEntropyTest(algorithm, password = "test-password-123") {
 // 5. PERBANDINGAN ALGORITMA (AES-GCM vs AES-CBC)
 // ============================================================
 
-async function runComparisonTest(password = "test-password-123") {
-  const testData = randomBuffer(1 * 1024 * 1024); // 1 MB
+async function runComparisonTest(password = TEST_PASSWORD_FIXTURE, options = {}) {
+  // Gunakan masukan ASLI pengguna untuk perbandingan; jika tidak tersedia,
+  // pakai data acak 1 MB (ukuran standar benchmark).
+  const testData =
+    options.data && options.data.byteLength > 0
+      ? sliceData(options.data, 4 * 1024 * 1024)
+      : randomBuffer(1 * 1024 * 1024);
+
   const algorithms = ["AES-GCM", "AES-CBC"];
   const results = {};
 
