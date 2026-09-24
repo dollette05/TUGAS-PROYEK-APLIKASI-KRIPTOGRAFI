@@ -309,13 +309,26 @@ document.getElementById("btnRunAll").addEventListener("click", async () => {
 });
 
 async function runAndShowCorrectness(password, userData) {
+  const includeSamples = document.getElementById("testIncludeSamples").checked;
   const results = await runCorrectnessTest(currentTestAlgorithm, password, {
     userData,
-    includeSamples: document.getElementById("testIncludeSamples").checked,
+    includeSamples,
     fillToCount: 10,
   });
   const body = document.getElementById("correctnessBody");
   body.innerHTML = "";
+
+  if (results.length === 0) {
+    // Tidak ada data apapun untuk diuji: tampilkan baris informasi, jangan crash
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="4" style="text-align:center; color:var(--text-muted); padding: 20px 0;">
+      Tidak ada data uji. Aktifkan centang "Sertakan berkas contoh" atau pilih sumber data (Teks/Berkas) terlebih dahulu.
+    </td>`;
+    body.appendChild(tr);
+    document.getElementById("correctnessTable").style.display = "";
+    return;
+  }
+
   results.forEach((r) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td><strong>${esc(r.name)}</strong></td>

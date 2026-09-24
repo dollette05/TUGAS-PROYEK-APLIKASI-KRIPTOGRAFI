@@ -169,25 +169,28 @@ async function buildCorrectnessTestCases(options = {}) {
 
     cases.push({ name: "Citra Asli (sample-image.png)", category: "Citra (PNG)", data: pngData });
     cases.push({ name: "Dokumen Asli (sample-document.pdf)", category: "Dokumen (PDF)", data: pdfData });
+
+    // Ketiga: cukupi hingga minimal fillToCount data uji dengan varian teks/biner standar.
+    // Blok filler ini HANYA dijalankan ketika includeSamples === true, sehingga
+    // mematikan checkbox benar-benar menghentikan semua data dummy/pelengkap.
+    const fillers = [
+      { name: "Teks Pendek (ASCII)", category: "Teks", gen: () => enc.encode("Halo dunia kriptografi!").buffer },
+      { name: "Teks Panjang (Lipsum)", category: "Teks", gen: () => enc.encode("Lorem ipsum dolor sit amet, consectetur adipiscing elit. ".repeat(60)).buffer },
+      { name: "Teks Kosong (0 Byte)", category: "Teks", gen: () => enc.encode("").buffer },
+      { name: "Karakter Khusus & Emoji", category: "Teks (Unicode)", gen: () => enc.encode("Data rahasia 🔒 penting! 日本語 • éàçü • @#$%^&*()").buffer },
+      { name: "Simulasi Biner 1 KB", category: "Biner", gen: () => randomBuffer(1024) },
+      { name: "Simulasi Berkas 10 KB", category: "Berkas Simulasi", gen: () => randomBuffer(10240) },
+      { name: "Simulasi Berkas 50 KB", category: "Berkas Simulasi", gen: () => randomBuffer(51200) },
+      { name: "Simulasi Berkas 100 KB", category: "Berkas Simulasi", gen: () => randomBuffer(102400) },
+    ];
+    for (const f of fillers) {
+      if (cases.length >= fillToCount) break;
+      cases.push({ name: f.name, category: f.category, data: f.gen() });
+    }
   }
 
-  // Ketiga: cukupi hingga minimal 10 data uji dengan varian teks/biner standar
-  // hanya jika jumlah masukan pengguna + contoh belum mencapai minimum.
-  const fillers = [
-    { name: "Teks Pendek (ASCII)", category: "Teks", gen: () => enc.encode("Halo dunia kriptografi!").buffer },
-    { name: "Teks Panjang (Lipsum)", category: "Teks", gen: () => enc.encode("Lorem ipsum dolor sit amet, consectetur adipiscing elit. ".repeat(60)).buffer },
-    { name: "Teks Kosong (0 Byte)", category: "Teks", gen: () => enc.encode("").buffer },
-    { name: "Karakter Khusus & Emoji", category: "Teks (Unicode)", gen: () => enc.encode("Data rahasia 🔒 penting! 日本語 • éàçü • @#$%^&*()").buffer },
-    { name: "Simulasi Biner 1 KB", category: "Biner", gen: () => randomBuffer(1024) },
-    { name: "Simulasi Berkas 10 KB", category: "Berkas Simulasi", gen: () => randomBuffer(10240) },
-    { name: "Simulasi Berkas 50 KB", category: "Berkas Simulasi", gen: () => randomBuffer(51200) },
-    { name: "Simulasi Berkas 100 KB", category: "Berkas Simulasi", gen: () => randomBuffer(102400) },
-  ];
-  for (const f of fillers) {
-    if (cases.length >= fillToCount) break;
-    cases.push({ name: f.name, category: f.category, data: f.gen() });
-  }
-
+  // Jika includeSamples === false dan tidak ada userData, kembalikan array kosong.
+  // Pemanggil (testing.html) bertanggung jawab menampilkan pesan yang sesuai.
   return cases;
 }
 
