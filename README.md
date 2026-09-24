@@ -39,12 +39,20 @@ TUGAS-PROYEK-APLIKASI-KRIPTOGRAFI/
 ├── testing.html               Halaman pengujian (5 skenario wajib pengujian kuantitatif)
 ├── enrichment.html            Halaman pengayaan edukasi: visualisasi pola ECB vs AES-GCM
 ├── css/
-│   └── style.css              Styling responsif aplikasi (Dark/Light mode)
+│   ├── tokens.css               Design tokens warna & tipografi (Dark/Light mode)
+│   ├── base.css                 Reset, gaya dasar body, & struktur layout
+│   ├── components.css           Komponen bersama (topbar, panel, tombol, form, dll.)
+│   ├── responsive.css           Media queries & preferensi Reduced Motion
+│   └── pages/
+│       ├── testing.css          Styling khusus halaman testing.html
+│       └── enrichment.css       Styling khusus halaman enrichment.html
 ├── js/
-│   ├── crypto.js              Logika inti kriptografi (AES-GCM, AES-CBC, PBKDF2, Hex/Base64)
-│   ├── main.js                Penghubung UI ke kriptografi, serialisasi paket, & penanganan berkas
-│   ├── testing.js             Logika 5 skenario pengujian wajib & pemuatan sampel berkas
-│   └── enrichment.js          Logika visualisasi enkripsi blok ECB vs mode aman GCM
+│   ├── crypto.js                Logika inti kriptografi (AES-GCM, AES-CBC, PBKDF2, Hex/Base64)
+│   ├── main.js                  Penghubung UI ke kriptografi, serialisasi paket, & penanganan berkas
+│   ├── testing.js               Logika 5 skenario pengujian wajib & pemuatan sampel berkas
+│   ├── enrichment.js            Logika visualisasi enkripsi blok ECB vs mode aman GCM
+│   ├── testing-app.js           Orkestrasi UI halaman testing (konfigurasi & render hasil uji)
+│   └── enrichment-app.js        Orkestrasi UI halaman enrichment (pemrosesan citra ke canvas)
 ├── tests/
 │   ├── unit-tests.html        Runner unit test berbasis browser
 │   └── unit-tests.js          8 unit test untuk fungsi inti & validasi integritas

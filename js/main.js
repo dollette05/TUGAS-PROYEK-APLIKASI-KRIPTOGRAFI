@@ -36,13 +36,6 @@ if (typeof document !== "undefined") {
       if (filePanel) filePanel.style.display = currentMode === "file" ? "" : "none";
     });
   });
-
-  document.querySelectorAll(".pw-toggle").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const input = document.getElementById(btn.dataset.target);
-      if (input) input.type = input.type === "password" ? "text" : "password";
-    });
-  });
 }
 
 // ============================================================

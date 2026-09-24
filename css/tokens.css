@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:ital,wght@0,400..700;1,400..700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..800&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+/* =====================================================================
+   BRANKAS DIGITAL — DESIGN TOKENS
+   Bespoke, intentional UI with distinct personality for Dark & Light modes.
+   ===================================================================== */
+
+/* --- DARK MODE (Default / Primary) --- */
+:root {
+  color-scheme: dark;
+  
+  /* Distinct Typography for Dark Mode: Tech-forward & Crisp */
+  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  
+  /* Color Tokens - Obsidian Vault & Luminous Blue/Cyan Accents */
+  --bg: #090d16;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #131c31 0%, #090d16 70%);
+  --surface: #0f172a;
+  --surface-card: rgba(17, 24, 39, 0.72);
+  --surface-hover: rgba(30, 41, 59, 0.7);
+  --surface-input: rgba(15, 23, 42, 0.85);
+  
+  --border: rgba(255, 255, 255, 0.09);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-focus: rgba(56, 189, 248, 0.55);
+  
+  --text: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  
+  --primary: #38bdf8;
+  --primary-hover: #7dd3fc;
+  --primary-active: #0ea5e9;
+  --primary-contrast: #031324;
+  --primary-glow: 0 0 20px rgba(56, 189, 248, 0.28);
+  
+  --accent-cyan: #22d3ee;
+  --accent-blue: #3b82f6;
+  --accent-purple: #a855f7;
+  
+  --success: #34d399;
+  --success-bg: rgba(52, 211, 153, 0.1);
+  --success-border: rgba(52, 211, 153, 0.3);
+  
+  --warning: #fbbf24;
+  --warning-bg: rgba(251, 191, 36, 0.1);
+  --warning-border: rgba(251, 191, 36, 0.3);
+  
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.1);
+  --danger-border: rgba(248, 113, 113, 0.3);
+  
+  --card-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --card-shadow-hover: 0 18px 42px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(56, 189, 248, 0.25);
+  --topbar-bg: rgba(9, 13, 22, 0.85);
+  --toggle-bg: rgba(2, 6, 23, 0.65);
+  
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-full: 9999px;
+  
+  --dur-fast: 150ms;
+  --dur-norm: 250ms;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- LIGHT MODE: Editorial Precision & Swiss Typography --- */
+[data-theme="light"] {
+  color-scheme: light;
+  
+  /* Distinct Typography for Light Mode: Editorial & Structured */
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: 'Instrument Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  
+  /* Color Tokens - Warm Alabaster & Royal Cobalt */
+  --bg: #f8fafc;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #e2e8f0 0%, #f8fafc 70%);
+  --surface: #ffffff;
+  --surface-card: #ffffff;
+  --surface-hover: #f1f5f9;
+  --surface-input: #ffffff;
+  
+  --border: #e2e8f0;
+  --border-subtle: #edf2f7;
+  --border-focus: rgba(37, 99, 235, 0.45);
+  
+  --text: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-active: #1e40af;
+  --primary-contrast: #ffffff;
+  --primary-glow: 0 4px 16px rgba(37, 99, 235, 0.22);
+  
+  --accent-cyan: #0284c7;
+  --accent-blue: #2563eb;
+  --accent-purple: #7c3aed;
+  
+  --success: #059669;
+  --success-bg: rgba(5, 150, 105, 0.08);
+  --success-border: rgba(5, 150, 105, 0.28);
+  
+  --warning: #d97706;
+  --warning-bg: rgba(217, 119, 6, 0.08);
+  --warning-border: rgba(217, 119, 6, 0.28);
+  
+  --danger: #dc2626;
+  --danger-bg: rgba(220, 38, 38, 0.08);
+  --danger-border: rgba(220, 38, 38, 0.28);
+  
+  --card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04), 0 0 0 1px #e2e8f0;
+  --card-shadow-hover: 0 12px 30px -4px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(37, 99, 235, 0.3);
+  --topbar-bg: rgba(255, 255, 255, 0.88);
+  --toggle-bg: #e2e8f0;
+}

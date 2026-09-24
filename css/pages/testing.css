@@ -1,0 +1,121 @@
+/* =====================================================================
+   TESTING SUITE & TABLES (testing.html)
+   ===================================================================== */
+.test-card {
+  margin-bottom: 24px;
+}
+
+.test-card .desc {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin-top: 12px;
+}
+
+th, td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pass {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.fail {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.metric-row:last-child {
+  border-bottom: none;
+}
+
+.metric-label {
+  color: var(--text-secondary);
+}
+
+/* Histograms */
+.hist-bars {
+  display: flex;
+  align-items: flex-end;
+  height: 64px;
+  gap: 2px;
+  margin-top: 10px;
+  background: var(--toggle-bg);
+  padding: 4px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+}
+
+.hist-bar {
+  flex: 1;
+  background: var(--primary);
+  border-radius: 1px 1px 0 0;
+  min-width: 2px;
+  transition: height var(--dur-norm) var(--ease);
+}
+
+.hist-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 12px;
+  letter-spacing: 0.03em;
+}
+
+/* Comparison Grid */
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.compare-col {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  background: var(--surface-card);
+}
+
+.compare-col h4 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.run-all {
+  margin-bottom: 24px;
+}
