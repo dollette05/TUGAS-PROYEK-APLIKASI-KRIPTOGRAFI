@@ -315,14 +315,39 @@ async function runEntropyTest(algorithm, password = TEST_PASSWORD_FIXTURE, optio
     sourceLabel = "Masukan user (teks/berkas)";
   }
 
-  const encrypted = await encryptData(plaintext, password, algorithm);
+  // Jalankan KEDUA algoritma dengan plaintext yang SAMA agar perbandingan akurat.
+  // Salt dan IV tetap acak (realistis), namun plaintextnya identik sehingga
+  // perbedaan yang terlihat murni berasal dari karakteristik masing-masing algoritma.
+  const encGCM = await encryptData(plaintext, password, "AES-GCM");
+  const encCBC = await encryptData(plaintext, password, "AES-CBC");
+
+  // Overhead: GCM menambah 16-byte authentication tag; CBC menerapkan PKCS#7 padding
+  // (0–15 byte ekstra dibulatkan ke kelipatan 16).
+  const gcmOverhead = encGCM.ciphertext.byteLength - plaintext.byteLength;
+  const cbcOverhead = encCBC.ciphertext.byteLength - plaintext.byteLength;
 
   return {
+    // Metadata plainteks
+    plaintextSize: plaintext.byteLength,
     plaintextEntropy: calculateEntropy(plaintext),
-    ciphertextEntropy: calculateEntropy(encrypted.ciphertext),
     plaintextHistogram: calculateHistogram(plaintext),
-    ciphertextHistogram: calculateHistogram(encrypted.ciphertext),
     sourceLabel,
+
+    // Hasil GCM
+    gcmCiphertextSize: encGCM.ciphertext.byteLength,
+    gcmEntropy: calculateEntropy(encGCM.ciphertext),
+    gcmHistogram: calculateHistogram(encGCM.ciphertext),
+    gcmOverhead,
+    gcmIVLength: encGCM.iv ? encGCM.iv.byteLength : 12,
+    gcmHasAuthTag: true,
+
+    // Hasil CBC
+    cbcCiphertextSize: encCBC.ciphertext.byteLength,
+    cbcEntropy: calculateEntropy(encCBC.ciphertext),
+    cbcHistogram: calculateHistogram(encCBC.ciphertext),
+    cbcOverhead,
+    cbcIVLength: encCBC.iv ? encCBC.iv.byteLength : 16,
+    cbcHasAuthTag: false,
   };
 }
 

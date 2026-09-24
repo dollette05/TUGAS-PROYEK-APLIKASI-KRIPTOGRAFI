@@ -150,21 +150,13 @@
 
     <section class="panel test-card">
       <h3>4. Uji Entropi &amp; Histogram Distribusi Byte</h3>
-      <p class="desc">Entropi Shannon mengukur tingkat keacakan data (0-8 bit). Cipherteks berkualitas tinggi memiliki entropi mendekati 8.000 bit dengan distribusi histogram merata.</p>
-      <div id="entropyResult" style="display:none">
-        <div class="metric-row"><span class="metric-label">Entropi Plainteks</span><span id="entPlain"></span></div>
-        <div class="metric-row"><span class="metric-label">Entropi Cipherteks</span><span id="entCipher" class="pass"></span></div>
-        <div class="metric-row"><span class="metric-label">Sumber Data</span><span id="entSource"></span></div>
-        <div class="hist-label">Distribusi Histogram Plainteks (byte 0-255)</div>
-        <div class="hist-bars" id="histPlain"></div>
-        <div class="hist-label">Distribusi Histogram Cipherteks (byte 0-255)</div>
-        <div class="hist-bars" id="histCipher"></div>
-      </div>
+      <p class="desc">Entropi Shannon mengukur tingkat keacakan data (0-8 bit). Cipherteks berkualitas tinggi memiliki entropi mendekati 8.000 bit dengan distribusi histogram merata. Kedua algoritma (GCM &amp; CBC) diuji pada plaintext yang sama untuk perbandingan overhead yang jelas.</p>
+      <div id="entropyResult" style="display:none"></div>
     </section>
 
     <section class="panel test-card">
       <h3>5. Perbandingan Komprehensif: AES-GCM vs AES-CBC</h3>
-      <p class="desc">Perbandingan performa, entropi, dan ketahanan terhadap manipulasi cipherteks (tampering detection).</p>
+      <p class="desc">Perbandingan performa (throughput, rata-rata 3 run), entropi, overhead cipherteks, panjang IV, auth tag bawaan, dan ketahanan terhadap manipulasi cipherteks (tampering detection).</p>
       <div id="comparisonResult" style="display:none" class="compare-grid"></div>
     </section>
   </main>
