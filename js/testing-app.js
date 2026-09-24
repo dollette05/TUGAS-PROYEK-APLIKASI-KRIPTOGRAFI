@@ -222,15 +222,56 @@ function renderHistogram(containerId, freq) {
 }
 
 async function runAndShowEntropy(password, userData) {
+  // Uji 4 kini selalu menjalankan KEDUA algoritma dengan plaintext yang sama
+  // sehingga perbandingan nyata terlihat (ukuran ciphertext, overhead, entropi).
   const r = await runEntropyTest(currentTestAlgorithm, password, {
     data: userData.length ? userData[0].data : null,
   });
-  document.getElementById("entPlain").textContent = r.plaintextEntropy.toFixed(3) + " bit";
-  document.getElementById("entCipher").textContent = r.ciphertextEntropy.toFixed(3) + " bit";
-  document.getElementById("entSource").textContent = r.sourceLabel;
-  renderHistogram("histPlain", r.plaintextHistogram);
-  renderHistogram("histCipher", r.ciphertextHistogram);
-  document.getElementById("entropyResult").style.display = "";
+
+  const container = document.getElementById("entropyResult");
+  container.innerHTML = `
+    <div class="metric-row"><span class="metric-label">Entropi Plainteks</span><span id="entPlain">${r.plaintextEntropy.toFixed(3)} bit</span></div>
+    <div class="metric-row"><span class="metric-label">Sumber Data</span><span id="entSource">${esc(r.sourceLabel)}</span></div>
+    <div class="metric-row"><span class="metric-label">Ukuran Plainteks</span><span>${formatBytes(r.plaintextSize)}</span></div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
+      <div class="compare-col" style="padding:14px; border-radius:10px; background:var(--surface2);">
+        <h4 style="margin:0 0 10px; font-size:0.9rem; color:var(--primary);">AES-256-GCM</h4>
+        <div class="metric-row"><span class="metric-label">Entropi Cipherteks</span><span class="pass">${r.gcmEntropy.toFixed(4)} bit</span></div>
+        <div class="metric-row"><span class="metric-label">Ukuran Cipherteks</span><span><code>${formatBytes(r.gcmCiphertextSize)}</code></span></div>
+        <div class="metric-row"><span class="metric-label">Overhead</span><span style="color:var(--primary);">+${r.gcmOverhead} byte (Auth Tag)</span></div>
+        <div class="metric-row"><span class="metric-label">Panjang IV</span><span><code>${r.gcmIVLength} byte</code></span></div>
+        <div class="metric-row"><span class="metric-label">Auth Tag Bawaan</span><span class="pass">✓ Ada (128-bit)</span></div>
+        <div class="hist-label" style="margin-top:10px;">Histogram Cipherteks GCM</div>
+        <div class="hist-bars" id="histCipherGCM"></div>
+      </div>
+      <div class="compare-col" style="padding:14px; border-radius:10px; background:var(--surface2);">
+        <h4 style="margin:0 0 10px; font-size:0.9rem; color:var(--accent);">AES-256-CBC</h4>
+        <div class="metric-row"><span class="metric-label">Entropi Cipherteks</span><span class="pass">${r.cbcEntropy.toFixed(4)} bit</span></div>
+        <div class="metric-row"><span class="metric-label">Ukuran Cipherteks</span><span><code>${formatBytes(r.cbcCiphertextSize)}</code></span></div>
+        <div class="metric-row"><span class="metric-label">Overhead</span><span style="color:var(--accent);">+${r.cbcOverhead} byte (PKCS#7 Padding)</span></div>
+        <div class="metric-row"><span class="metric-label">Panjang IV</span><span><code>${r.cbcIVLength} byte</code></span></div>
+        <div class="metric-row"><span class="metric-label">Auth Tag Bawaan</span><span class="fail">✕ Tidak Ada</span></div>
+        <div class="hist-label" style="margin-top:10px;">Histogram Cipherteks CBC</div>
+        <div class="hist-bars" id="histCipherCBC"></div>
+      </div>
+    </div>
+
+    <div class="hist-label" style="margin-top:18px;">Histogram Plainteks (byte 0–255)</div>
+    <div class="hist-bars" id="histPlainEnt"></div>
+    <p class="hint" style="margin-top:10px;">
+      💡 <strong>Analisis:</strong> Kedua algoritma menghasilkan entropi cipherteks ~7.99 bit (mendekati acak sempurna).
+      Perbedaan nyata ada pada <strong>overhead</strong>: GCM menambah <em>16 byte auth tag</em> di ujung ciphertext (tanpa padding),
+      sedangkan CBC menerapkan <em>PKCS#7 padding</em> (1–16 byte) untuk membulatkan ke kelipatan 16 byte.
+    </p>
+  `;
+
+  // Render histogram
+  renderHistogram("histCipherGCM", r.gcmHistogram);
+  renderHistogram("histCipherCBC", r.cbcHistogram);
+  renderHistogram("histPlainEnt", r.plaintextHistogram);
+
+  container.style.display = "";
 }
 
 async function runAndShowComparison(password, userData) {
@@ -244,10 +285,16 @@ async function runAndShowComparison(password, userData) {
     col.className = "compare-col";
     col.innerHTML = `
       <h4>${getAlgorithmDisplayName(algo)}</h4>
-      <div class="metric-row"><span class="metric-label">Waktu enkripsi</span><span><code>${r.encryptMs.toFixed(2)} ms</code></span></div>
-      <div class="metric-row"><span class="metric-label">Waktu dekripsi</span><span><code>${r.decryptMs.toFixed(2)} ms</code></span></div>
-      <div class="metric-row"><span class="metric-label">Entropi cipherteks</span><span><code>${r.entropy.toFixed(3)} bit</code></span></div>
-      <div class="metric-row"><span class="metric-label">Deteksi tampering</span><span class="${r.detectsTampering ? "pass" : "fail"}">${r.detectsTampering ? "✓ Terdeteksi (Aman)" : "✕ Tidak Terdeteksi"}</span></div>
+      <div class="metric-row"><span class="metric-label">Waktu enkripsi (rata-rata 3×)</span><span><code>${r.encryptMs.toFixed(2)} ms</code></span></div>
+      <div class="metric-row"><span class="metric-label">Waktu dekripsi (rata-rata 3×)</span><span><code>${r.decryptMs.toFixed(2)} ms</code></span></div>
+      <div class="metric-row"><span class="metric-label">Throughput enkripsi</span><span><code>${r.throughputMBps.toFixed(1)} MB/s</code></span></div>
+      <div class="metric-row"><span class="metric-label">Entropi cipherteks</span><span><code>${r.entropy.toFixed(4)} bit</code></span></div>
+      <div class="metric-row"><span class="metric-label">Ukuran plainteks</span><span><code>${formatBytes(r.plaintextSize)}</code></span></div>
+      <div class="metric-row"><span class="metric-label">Ukuran cipherteks</span><span><code>${formatBytes(r.ciphertextSize)}</code></span></div>
+      <div class="metric-row"><span class="metric-label">Overhead</span><span><code>+${r.overhead} byte</code></span></div>
+      <div class="metric-row"><span class="metric-label">Panjang IV</span><span><code>${r.ivLength} byte</code></span></div>
+      <div class="metric-row"><span class="metric-label">Auth Tag Bawaan</span><span class="${r.hasAuthTag ? 'pass' : 'fail'}">${r.hasAuthTag ? '✓ Ada (128-bit GCM)' : '✕ Tidak Ada (perlu HMAC eksternal)'}</span></div>
+      <div class="metric-row"><span class="metric-label">Deteksi tampering</span><span class="${r.detectsTampering ? 'pass' : 'fail'}">${r.detectsTampering ? '✓ Terdeteksi (Aman)' : '✕ Tidak Terdeteksi (rentan)'}</span></div>
     `;
     container.appendChild(col);
   }

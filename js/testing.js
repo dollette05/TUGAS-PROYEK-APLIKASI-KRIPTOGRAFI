@@ -315,14 +315,39 @@ async function runEntropyTest(algorithm, password = TEST_PASSWORD_FIXTURE, optio
     sourceLabel = "Masukan user (teks/berkas)";
   }
 
-  const encrypted = await encryptData(plaintext, password, algorithm);
+  // Jalankan KEDUA algoritma dengan plaintext yang SAMA agar perbandingan akurat.
+  // Salt dan IV tetap acak (realistis), namun plaintextnya identik sehingga
+  // perbedaan yang terlihat murni berasal dari karakteristik masing-masing algoritma.
+  const encGCM = await encryptData(plaintext, password, "AES-GCM");
+  const encCBC = await encryptData(plaintext, password, "AES-CBC");
+
+  // Overhead: GCM menambah 16-byte authentication tag; CBC menerapkan PKCS#7 padding
+  // (0–15 byte ekstra dibulatkan ke kelipatan 16).
+  const gcmOverhead = encGCM.ciphertext.byteLength - plaintext.byteLength;
+  const cbcOverhead = encCBC.ciphertext.byteLength - plaintext.byteLength;
 
   return {
+    // Metadata plainteks
+    plaintextSize: plaintext.byteLength,
     plaintextEntropy: calculateEntropy(plaintext),
-    ciphertextEntropy: calculateEntropy(encrypted.ciphertext),
     plaintextHistogram: calculateHistogram(plaintext),
-    ciphertextHistogram: calculateHistogram(encrypted.ciphertext),
     sourceLabel,
+
+    // Hasil GCM
+    gcmCiphertextSize: encGCM.ciphertext.byteLength,
+    gcmEntropy: calculateEntropy(encGCM.ciphertext),
+    gcmHistogram: calculateHistogram(encGCM.ciphertext),
+    gcmOverhead,
+    gcmIVLength: encGCM.iv ? encGCM.iv.byteLength : 12,
+    gcmHasAuthTag: true,
+
+    // Hasil CBC
+    cbcCiphertextSize: encCBC.ciphertext.byteLength,
+    cbcEntropy: calculateEntropy(encCBC.ciphertext),
+    cbcHistogram: calculateHistogram(encCBC.ciphertext),
+    cbcOverhead,
+    cbcIVLength: encCBC.iv ? encCBC.iv.byteLength : 16,
+    cbcHasAuthTag: false,
   };
 }
 
@@ -331,9 +356,10 @@ async function runEntropyTest(algorithm, password = TEST_PASSWORD_FIXTURE, optio
 // ============================================================
 
 async function runComparisonTest(password = TEST_PASSWORD_FIXTURE, options = {}) {
-  // Gunakan masukan ASLI pengguna untuk perbandingan; jika tidak tersedia,
-  // pakai data acak 1 MB (ukuran standar benchmark).
-  const testData =
+  // Gunakan plaintext yang SAMA untuk kedua algoritma agar benchmark adil.
+  // Jika pengguna menyediakan data sendiri, pakai itu; jika tidak, bangkitkan
+  // sekali di sini dan pakai untuk keduanya (bukan dua kali random berbeda).
+  const sharedPlaintext =
     options.data && options.data.byteLength > 0
       ? sliceData(options.data, 4 * 1024 * 1024)
       : randomBuffer(1 * 1024 * 1024);
@@ -342,15 +368,35 @@ async function runComparisonTest(password = TEST_PASSWORD_FIXTURE, options = {})
   const results = {};
 
   for (const algo of algorithms) {
-    const t0 = performance.now();
-    const encrypted = await encryptData(testData, password, algo);
-    const t1 = performance.now();
-    await decryptData(encrypted, password, algo);
-    const t2 = performance.now();
+    // Ulangi enkripsi/dekripsi 3 kali lalu ambil rata-rata
+    // agar hasil waktu lebih stabil dan tidak bergantung cache JIT pertama.
+    let totalEncMs = 0, totalDecMs = 0;
+    let lastEncrypted;
+    const RUNS = 3;
+    for (let run = 0; run < RUNS; run++) {
+      const t0 = performance.now();
+      lastEncrypted = await encryptData(sharedPlaintext, password, algo);
+      const t1 = performance.now();
+      await decryptData(lastEncrypted, password, algo);
+      const t2 = performance.now();
+      totalEncMs += t1 - t0;
+      totalDecMs += t2 - t1;
+    }
+    const encrypted = lastEncrypted;
 
-    // Uji ketahanan terhadap tampering: ubah 1 byte ciphertext, coba dekripsi
+    // Ukuran ciphertext & overhead vs plaintext
+    const ciphertextSize = encrypted.ciphertext.byteLength;
+    const overhead = ciphertextSize - sharedPlaintext.byteLength;
+
+    // Throughput enkripsi (MB/s)
+    const avgEncMs = totalEncMs / RUNS;
+    const avgDecMs = totalDecMs / RUNS;
+    const mbPerSec = (sharedPlaintext.byteLength / 1024 / 1024) / (avgEncMs / 1000);
+
+    // Uji ketahanan terhadap tampering: ubah 1 byte di tengah ciphertext
     const tampered = new Uint8Array(encrypted.ciphertext.slice(0));
-    tampered[0] ^= 0xff;
+    const midByte = Math.floor(tampered.length / 2);
+    tampered[midByte] ^= 0xff;
     let detectsTampering = false;
     try {
       await decryptData({ ...encrypted, ciphertext: tampered.buffer }, password, algo);
@@ -358,11 +404,21 @@ async function runComparisonTest(password = TEST_PASSWORD_FIXTURE, options = {})
       detectsTampering = true;
     }
 
+    // Metadata algoritma
+    const ivLength = encrypted.iv ? encrypted.iv.byteLength : (algo === "AES-GCM" ? 12 : 16);
+    const hasAuthTag = algo === "AES-GCM";
+
     results[algo] = {
-      encryptMs: t1 - t0,
-      decryptMs: t2 - t1,
+      encryptMs: avgEncMs,
+      decryptMs: avgDecMs,
+      throughputMBps: mbPerSec,
       entropy: calculateEntropy(encrypted.ciphertext),
+      ciphertextSize,
+      overhead,
+      ivLength,
+      hasAuthTag,
       detectsTampering,
+      plaintextSize: sharedPlaintext.byteLength,
     };
   }
   return results;
