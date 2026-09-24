@@ -1,20 +1,32 @@
 /* =====================================================================
    HEADER & NAVIGATION
    ===================================================================== */
+/* =====================================================================
+   HEADER & NAVIGATION — Floating Glass Navbar
+   ===================================================================== */
 .topbar {
   position: sticky;
-  top: 0;
-  z-index: 100;
+  top: 14px;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 28px;
+  width: calc(100% - 32px);
+  max-width: 940px;
+  margin: 14px auto 28px;
+  padding: 10px 20px;
   background: var(--topbar-bg);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
-  transition: border-color var(--dur-norm) var(--ease), background var(--dur-norm) var(--ease);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--topbar-border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--topbar-shadow);
+  transition: border-color var(--dur-norm) var(--ease), background var(--dur-norm) var(--ease), box-shadow var(--dur-norm) var(--ease), transform var(--dur-norm) var(--ease);
+}
+
+.topbar:hover {
+  border-color: var(--border-focus);
 }
 
 .brand-group {
@@ -33,16 +45,22 @@
   letter-spacing: -0.02em;
   color: var(--text);
   text-decoration: none;
-  transition: opacity var(--dur-fast);
+  transition: transform var(--dur-fast) var(--spring), opacity var(--dur-fast);
 }
 
 .brand:hover {
-  opacity: 0.9;
+  opacity: 0.95;
+  transform: translateY(-1px);
 }
 
 .brand-icon {
   color: var(--primary);
-  filter: drop-shadow(0 0 8px var(--primary-glow));
+  filter: drop-shadow(0 0 10px var(--primary-glow));
+  transition: transform var(--dur-norm) var(--spring);
+}
+
+.brand:hover .brand-icon {
+  transform: rotate(-8deg) scale(1.08);
 }
 
 .brand-badge {
@@ -50,17 +68,18 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: var(--r-full);
   background: var(--success-bg);
   color: var(--success);
   border: 1px solid var(--success-border);
+  backdrop-filter: blur(8px);
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .topnav {
@@ -69,8 +88,9 @@
   gap: 4px;
   background: var(--toggle-bg);
   padding: 4px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(8px);
 }
 
 .topnav a {
@@ -78,26 +98,36 @@
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 500;
-  padding: 6px 14px;
-  border-radius: var(--r-sm);
+  padding: 7px 16px;
+  border-radius: var(--r-md);
   transition: all var(--dur-fast) var(--ease);
   white-space: nowrap;
+  position: relative;
 }
 
 .topnav a:hover {
   color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .topnav a.active {
   background: var(--surface);
   color: var(--text);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
 }
 
 [data-theme="dark"] .topnav a.active {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(56, 189, 248, 0.14);
   color: var(--primary);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.18);
+}
+
+[data-theme="light"] .topnav a.active {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(37, 99, 235, 0.25);
 }
 
 /* Theme Toggle Button */
@@ -105,24 +135,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--r-md);
+  width: 42px;
+  height: 42px;
+  border-radius: var(--r-lg);
   background: var(--toggle-bg);
   border: 1px solid var(--border);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--dur-fast) var(--ease);
+  backdrop-filter: blur(8px);
 }
 
 .theme-toggle:hover {
   color: var(--text);
-  border-color: var(--text-muted);
-  transform: translateY(-1px);
+  border-color: var(--primary);
+  transform: translateY(-2px) rotate(8deg);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
 .theme-toggle:active {
-  transform: translateY(1px);
+  transform: translateY(0) scale(0.95);
 }
 
 .theme-toggle .icon-sun,
@@ -148,39 +180,56 @@
 }
 
 /* =====================================================================
-   CARDS / PANELS
+   CARDS / PANELS — Glassmorphism Style
    ===================================================================== */
 .panel {
   background: var(--surface-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid var(--border-glass);
   border-radius: var(--r-xl);
-  padding: 24px 26px;
+  padding: 28px 30px;
   margin-bottom: 24px;
   box-shadow: var(--card-shadow);
   transition: transform var(--dur-norm) var(--ease), box-shadow var(--dur-norm) var(--ease), border-color var(--dur-norm) var(--ease);
+  animation: cardFadeUp 0.45s var(--ease) both;
+}
+
+.panel:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.panel:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.panel:hover {
+  border-color: var(--border-focus);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .panel h2 {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text);
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  background: linear-gradient(135deg, var(--text) 30%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .panel h3 {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--text);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 /* =====================================================================
@@ -337,12 +386,12 @@ textarea::placeholder {
 }
 
 /* =====================================================================
-   BUTTONS
+   BUTTONS & MICRO-INTERACTIONS
    ===================================================================== */
 .btn-row {
   display: flex;
-  gap: 12px;
-  margin-top: 20px;
+  gap: 14px;
+  margin-top: 24px;
   flex-wrap: wrap;
 }
 
@@ -351,39 +400,42 @@ textarea::placeholder {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   flex: 1;
-  min-height: 46px;
-  padding: 10px 22px;
+  min-height: 48px;
+  padding: 12px 24px;
   border-radius: var(--r-md);
   font-family: var(--font-body);
-  font-size: 0.92rem;
+  font-size: 0.94rem;
   font-weight: 600;
   cursor: pointer;
   touch-action: manipulation;
   transition: all var(--dur-fast) var(--ease);
   text-decoration: none;
   border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: var(--primary-gradient);
   color: var(--primary-contrast);
   box-shadow: var(--primary-glow);
 }
 
 .btn-primary:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.45);
+  filter: brightness(1.06);
 }
 
 .btn-primary:active {
-  background: var(--primary-active);
-  transform: translateY(1px);
+  transform: translateY(0) scale(0.98);
+  filter: brightness(0.95);
 }
 
 .btn-primary:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
@@ -392,53 +444,59 @@ textarea::placeholder {
 .btn-secondary {
   background: var(--surface);
   color: var(--text);
-  border-color: var(--border);
+  border-color: var(--border-glass);
+  backdrop-filter: blur(10px);
 }
 
 [data-theme="dark"] .btn-secondary {
   background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .btn-secondary:hover {
-  border-color: var(--text-muted);
+  border-color: var(--primary);
   background: var(--surface-hover);
-  transform: translateY(-1px);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary:active {
-  transform: translateY(1px);
+  transform: translateY(0) scale(0.98);
 }
 
 /* =====================================================================
    DROPZONE / FILE UPLOAD
    ===================================================================== */
 .dropzone {
-  border: 2px dashed var(--border);
-  border-radius: var(--r-lg);
-  padding: 36px 20px;
+  border: 2px dashed var(--border-glass);
+  border-radius: var(--r-xl);
+  padding: 40px 24px;
   text-align: center;
   cursor: pointer;
   background: var(--toggle-bg);
+  backdrop-filter: blur(12px);
   transition: all var(--dur-norm) var(--ease);
   position: relative;
 }
 
 .dropzone:hover {
   border-color: var(--primary);
-  background: rgba(56, 189, 248, 0.04);
+  background: rgba(56, 189, 248, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(56, 189, 248, 0.12);
 }
 
 .dropzone.dragover {
   border-color: var(--primary);
-  background: rgba(56, 189, 248, 0.08);
-  transform: scale(1.01);
-  box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+  background: rgba(56, 189, 248, 0.12);
+  transform: scale(1.02);
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.25);
 }
 
 .dropzone p {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   line-height: 1.5;
   margin: 0;
 }
@@ -447,12 +505,14 @@ textarea::placeholder {
    RESULT BOX & CODE VIEWER
    ===================================================================== */
 .result-box {
-  margin-top: 22px;
+  margin-top: 24px;
   background: var(--surface-input);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 16px;
-  animation: fadeIn var(--dur-norm) var(--ease);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--r-xl);
+  padding: 18px 20px;
+  animation: cardFadeUp 0.35s var(--ease);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .result-header {
@@ -460,7 +520,7 @@ textarea::placeholder {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 
@@ -470,11 +530,12 @@ textarea::placeholder {
   gap: 6px;
   font-size: 0.78rem;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: var(--r-full);
   background: var(--success-bg);
   color: var(--success);
   border: 1px solid var(--success-border);
+  backdrop-filter: blur(8px);
 }
 
 .badge::before {
@@ -484,22 +545,23 @@ textarea::placeholder {
   height: 6px;
   border-radius: 50%;
   background: currentColor;
+  box-shadow: 0 0 8px currentColor;
 }
 
 .format-toggle {
   display: inline-flex;
   background: var(--toggle-bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--r-full);
-  padding: 2px;
-  gap: 2px;
+  padding: 3px;
+  gap: 3px;
 }
 
 .btn-fmt {
   font-family: var(--font-body);
   font-size: 0.75rem;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: var(--r-full);
   border: none;
   background: transparent;
@@ -511,6 +573,7 @@ textarea::placeholder {
 .btn-fmt.active {
   background: var(--primary);
   color: var(--primary-contrast);
+  box-shadow: var(--primary-glow);
 }
 
 .btn-copy {
@@ -532,6 +595,7 @@ textarea::placeholder {
 .btn-copy:hover {
   border-color: var(--primary);
   color: var(--primary);
+  transform: translateY(-1px);
 }
 
 .btn-copy:active {
@@ -542,12 +606,13 @@ textarea::placeholder {
 .error-box,
 .success-box,
 .progress-box {
-  margin-top: 16px;
-  padding: 14px 16px;
-  border-radius: var(--r-md);
-  font-size: 0.88rem;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: var(--r-lg);
+  font-size: 0.9rem;
   line-height: 1.5;
-  animation: fadeIn var(--dur-norm) var(--ease);
+  animation: cardFadeUp 0.35s var(--ease);
+  backdrop-filter: blur(10px);
 }
 
 .error-box {
@@ -565,7 +630,7 @@ textarea::placeholder {
 .progress-box {
   background: rgba(56, 189, 248, 0.08);
   color: var(--primary);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  border: 1px solid rgba(56, 189, 248, 0.28);
   position: relative;
   overflow: hidden;
 }
@@ -574,7 +639,7 @@ textarea::placeholder {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.15), transparent);
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.2), transparent);
   animation: shimmer 1.5s infinite;
 }
 
@@ -584,9 +649,9 @@ textarea::placeholder {
 .footer {
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.82rem;
-  padding: 24px 20px 40px;
-  border-top: 1px solid var(--border);
+  font-size: 0.84rem;
+  padding: 28px 20px 48px;
+  border-top: 1px solid var(--border-subtle);
   line-height: 1.6;
 }
 
@@ -595,8 +660,8 @@ textarea::placeholder {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 6px;
-  font-size: 0.8rem;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
   color: var(--primary);
   font-weight: 500;
 }
@@ -604,6 +669,17 @@ textarea::placeholder {
 /* =====================================================================
    KEYFRAMES & ANIMATIONS
    ===================================================================== */
+@keyframes cardFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }

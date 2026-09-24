@@ -3,32 +3,49 @@
    ===================================================================== */
 @media (max-width: 680px) {
   .topbar {
+    top: 8px;
+    width: calc(100% - 20px);
+    margin: 8px auto 16px;
     flex-direction: column;
     align-items: stretch;
-    padding: 12px 16px;
+    padding: 12px 14px;
     gap: 12px;
+    border-radius: var(--r-lg);
   }
   
   .brand-group {
     justify-content: space-between;
+    width: 100%;
   }
   
   .topbar-actions {
     justify-content: space-between;
     width: 100%;
+    gap: 8px;
   }
   
   .topnav {
     flex: 1;
     overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .topnav::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .topnav a {
+    padding: 6px 12px;
+    font-size: 0.8rem;
   }
   
   .wrap {
-    padding: 20px 14px 48px;
+    padding: 16px 12px 48px;
   }
   
   .panel {
-    padding: 18px 16px;
+    padding: 20px 18px;
     border-radius: var(--r-lg);
   }
   
