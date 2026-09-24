@@ -285,10 +285,16 @@ async function runAndShowComparison(password, userData) {
     col.className = "compare-col";
     col.innerHTML = `
       <h4>${getAlgorithmDisplayName(algo)}</h4>
-      <div class="metric-row"><span class="metric-label">Waktu enkripsi</span><span><code>${r.encryptMs.toFixed(2)} ms</code></span></div>
-      <div class="metric-row"><span class="metric-label">Waktu dekripsi</span><span><code>${r.decryptMs.toFixed(2)} ms</code></span></div>
-      <div class="metric-row"><span class="metric-label">Entropi cipherteks</span><span><code>${r.entropy.toFixed(3)} bit</code></span></div>
-      <div class="metric-row"><span class="metric-label">Deteksi tampering</span><span class="${r.detectsTampering ? "pass" : "fail"}">${r.detectsTampering ? "✓ Terdeteksi (Aman)" : "✕ Tidak Terdeteksi"}</span></div>
+      <div class="metric-row"><span class="metric-label">Waktu enkripsi (rata-rata 3×)</span><span><code>${r.encryptMs.toFixed(2)} ms</code></span></div>
+      <div class="metric-row"><span class="metric-label">Waktu dekripsi (rata-rata 3×)</span><span><code>${r.decryptMs.toFixed(2)} ms</code></span></div>
+      <div class="metric-row"><span class="metric-label">Throughput enkripsi</span><span><code>${r.throughputMBps.toFixed(1)} MB/s</code></span></div>
+      <div class="metric-row"><span class="metric-label">Entropi cipherteks</span><span><code>${r.entropy.toFixed(4)} bit</code></span></div>
+      <div class="metric-row"><span class="metric-label">Ukuran plainteks</span><span><code>${formatBytes(r.plaintextSize)}</code></span></div>
+      <div class="metric-row"><span class="metric-label">Ukuran cipherteks</span><span><code>${formatBytes(r.ciphertextSize)}</code></span></div>
+      <div class="metric-row"><span class="metric-label">Overhead</span><span><code>+${r.overhead} byte</code></span></div>
+      <div class="metric-row"><span class="metric-label">Panjang IV</span><span><code>${r.ivLength} byte</code></span></div>
+      <div class="metric-row"><span class="metric-label">Auth Tag Bawaan</span><span class="${r.hasAuthTag ? 'pass' : 'fail'}">${r.hasAuthTag ? '✓ Ada (128-bit GCM)' : '✕ Tidak Ada (perlu HMAC eksternal)'}</span></div>
+      <div class="metric-row"><span class="metric-label">Deteksi tampering</span><span class="${r.detectsTampering ? 'pass' : 'fail'}">${r.detectsTampering ? '✓ Terdeteksi (Aman)' : '✕ Tidak Terdeteksi (rentan)'}</span></div>
     `;
     container.appendChild(col);
   }
