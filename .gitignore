@@ -1,6 +1,7 @@
 # Spesifikasi tugas internal (jangan ikut ter-commit ke repo publik)
 spesifikasi_produk_web_kriptografi.md
-
+.agents
+skills-lock.json
 # OS
 .DS_Store
 Thumbs.db
