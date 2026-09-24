@@ -101,6 +101,12 @@ async function encryptAES(dataBuffer, password) {
 }
 
 async function decryptAES({ salt, iv, ciphertext }, password) {
+  // Penegasan mode (Baseline Security): AES-GCM MURNI hanya bisa didekripsi
+  // jika IV tepat 12 byte (standar GCM). Jika data dari mode lain (mis. CBC
+  // dengan IV 16 byte) dipaksa masuk ke sini, langsung ditolak.
+  if (!iv || iv.byteLength !== 12) {
+    throw new Error("Dekripsi AES-GCM ditolak: IV harus tepat 12 byte (format GCM).");
+  }
   const key = await deriveKey(password, salt, "AES-GCM", 256);
   try {
     // Jika password salah ATAU ciphertext diubah walau 1 byte,
@@ -135,6 +141,12 @@ async function encryptAEScbc(dataBuffer, password) {
 }
 
 async function decryptAEScbc({ salt, iv, ciphertext }, password) {
+  // Penegasan mode (Baseline Security): AES-CBC MURNI hanya bisa didekripsi
+  // jika IV tepat 16 byte (ukuran blok AES). Jika data dari mode lain (mis.
+  // GCM dengan IV 12 byte) dipaksa masuk ke sini, langsung ditolak.
+  if (!iv || iv.byteLength !== 16) {
+    throw new Error("Dekripsi AES-CBC ditolak: IV harus tepat 16 byte (format CBC).");
+  }
   const key = await deriveKey(password, salt, "AES-CBC", 256);
   try {
     // Catatan: berbeda dari GCM, CBC tidak memverifikasi

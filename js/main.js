@@ -144,10 +144,14 @@ function unpackageFromText(rawText) {
     if (bytes.length >= 30 && (bytes[0] === 1 || bytes[0] === 2)) {
       const algorithm = bytes[0] === 1 ? "AES-GCM" : "AES-CBC";
       const ivLen = bytes[1];
-      const salt = bytes.slice(2, 18).buffer;
-      const iv = bytes.slice(18, 18 + ivLen).buffer;
-      const ciphertext = bytes.slice(18 + ivLen).buffer;
-      return { algorithm, salt, iv, ciphertext };
+      const expectedIvLen = algorithm === "AES-GCM" ? 12 : 16;
+      // Validasi ketat: panjang IV harus sesuai mode, data harus cukup panjang
+      if (ivLen === expectedIvLen && bytes.length >= 2 + 16 + ivLen) {
+        const salt = bytes.slice(2, 18).buffer;
+        const iv = bytes.slice(18, 18 + ivLen).buffer;
+        const ciphertext = bytes.slice(18 + ivLen).buffer;
+        return { algorithm, salt, iv, ciphertext };
+      }
     }
   } catch (_) {}
 
@@ -157,6 +161,23 @@ function unpackageFromText(rawText) {
 /** Kompatibilitas mundur: unpackageFromBase64 mengarahkan ke unpackageFromText. */
 function unpackageFromBase64(packedText) {
   return unpackageFromText(packedText);
+}
+
+/**
+ * Penegasan mode (Baseline Security):
+ * Setiap cipherteks hanya boleh didekripsi dengan algoritma yang SAMA
+ * dengan mode yang dipilih user (GCM hanya untuk GCM, CBC hanya untuk CBC).
+ * Jika tidak cocok, lempar error dengan panduan perbaikan.
+ */
+function ensureAlgorithmMatch(payloadAlgorithm) {
+  if (payloadAlgorithm !== currentAlgorithm) {
+    throw new Error(
+      "Cipherteks ini dibuat dengan " + getAlgorithmDisplayName(payloadAlgorithm) +
+      ", tetapi mode yang sedang aktif adalah " + getAlgorithmDisplayName(currentAlgorithm) +
+      ". Ganti mode algoritma ke " + getAlgorithmDisplayName(payloadAlgorithm) +
+      " terlebih dahulu — mode tidak bisa saling menggantikan."
+    );
+  }
 }
 
 /** Gabungkan salt + iv + ciphertext jadi satu file biner (untuk mode berkas). */
@@ -236,6 +257,7 @@ if (typeof document !== "undefined") {
 
     try {
       const payload = unpackageFromText(packedText);
+      ensureAlgorithmMatch(payload.algorithm);
       const plainBuffer = await decryptData(payload, password, payload.algorithm);
       const plainText = new TextDecoder().decode(plainBuffer);
       showDecryptedTextResult(plainText, payload.algorithm);
@@ -366,6 +388,7 @@ async function handleFileOperation(operation, password) {
       outputName = selectedFile.name + ".enc";
     } else {
       const payload = await unpackageFromFile(selectedFile);
+      ensureAlgorithmMatch(payload.algorithm);
       const plainBuffer = await decryptData(payload, password, payload.algorithm);
       outputBlob = new Blob([plainBuffer]);
       outputName = selectedFile.name.replace(/\.enc$/, "") || "hasil_dekripsi";
