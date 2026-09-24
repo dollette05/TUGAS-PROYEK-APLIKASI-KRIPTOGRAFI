@@ -3,51 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Pengujian — Brankas Digital</title>
+<title>Pengujian Kriptografi — Brankas Digital</title>
+<script>
+  (function() {
+    var saved = localStorage.getItem("brankas-theme");
+    var theme = saved || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
 <link rel="stylesheet" href="css/style.css">
-<style>
-  .test-card { margin-bottom: 20px; }
-  .test-card h3 { font-size: 15px; margin: 0 0 4px; }
-  .test-card .desc { font-size: 12.5px; color: var(--muted); margin: 0 0 14px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-weight: 500; font-size: 11.5px; }
-  .pass { color: var(--accent-2); font-weight: 700; }
-  .fail { color: var(--danger); font-weight: 700; }
-  .metric-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
-  .metric-row:last-child { border-bottom: none; }
-  .metric-label { color: var(--muted); }
-  .hist-bars { display: flex; align-items: flex-end; height: 60px; gap: 1px; margin-top: 8px; }
-  .hist-bar { flex: 1; background: var(--accent); min-width: 1px; }
-  .hist-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
-  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .compare-col { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
-  .compare-col h4 { margin: 0 0 8px; font-size: 13.5px; }
-  .run-all { margin-bottom: 20px; }
-</style>
 </head>
 <body>
 <div class="app">
 
   <header class="topbar">
-    <div class="brand">Brankas Digital</div>
-    <nav class="topnav">
-      <a href="index.html">Enkripsi &amp; Dekripsi</a>
-      <a href="testing.html" class="active">Pengujian</a>
-      <a href="enrichment.html">Visualisasi ECB</a>
-    </nav>
+    <div class="brand-group">
+      <a href="index.html" class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          <circle cx="12" cy="16" r="1"></circle>
+        </svg>
+        <span>Brankas Digital</span>
+      </a>
+      <span class="brand-badge">Audit &amp; Benchmark</span>
+    </div>
+    <div class="topbar-actions">
+      <nav class="topnav">
+        <a href="index.html">Enkripsi &amp; Dekripsi</a>
+        <a href="testing.html" class="active">Pengujian</a>
+        <a href="enrichment.html">Visualisasi ECB</a>
+      </nav>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti Tema" title="Ganti Mode Tema">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </div>
   </header>
 
   <main class="wrap">
-    <button class="btn-primary run-all" id="btnRunAll" style="width:100%">Jalankan Semua Pengujian</button>
+    <button class="btn-primary run-all" id="btnRunAll" type="button" style="width:100%; margin-bottom: 24px;">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      </svg>
+      Jalankan Semua Skenario Pengujian
+    </button>
 
     <section class="panel test-card">
       <h3>Konfigurasi Pengujian</h3>
       <p class="desc">
-        Kata sandi dan data uji di bawah dipakai untuk <em>seluruh</em> skenario di halaman ini.
-        Unggah berkas Anda (Gambar, PDF, dll.) atau ketik teks agar pengujian dijalankan
-        berdasarkan masukan nyata — bukan data dummy. Jika tidak mengisi data, pengujian
-        tetap berjalan memakai data acak/berpola standar (khusus benchmark 1&nbsp;KB, 1&nbsp;MB, 10&nbsp;MB).
+        Kata sandi dan data uji di bawah dipakai untuk <em>seluruh</em> skenario pengujian.
+        Anda dapat mengunggah berkas nyata (PNG, PDF, dll.) atau memasukkan teks sendiri untuk
+        menguji ketahanan dan difusi algoritma pada data nyata.
       </p>
 
       <label class="field-label">Algoritma Utama (untuk uji 1, 2 &amp; 4)</label>
@@ -60,7 +79,7 @@
       <div class="pw-field">
         <input type="password" id="testPassword" value="test-password-123"
                placeholder="Kata sandi untuk seluruh pengujian" autocomplete="new-password">
-        <button type="button" class="pw-toggle" data-target="testPassword" aria-label="Tampilkan/sembunyikan kata sandi"></button>
+        <button type="button" class="pw-toggle" data-target="testPassword" aria-label="Tampilkan kata sandi"></button>
       </div>
 
       <label class="field-label">Sumber Data Uji</label>
@@ -71,43 +90,40 @@
       </div>
 
       <div id="testTextPanel" style="display:none">
-        <label class="field-label" for="testTextData">Teks / Plainteks yang Diuji</label>
-        <textarea id="testTextData" placeholder="Ketik teks yang ingin diuji. Teks ini dipakai untuk uji dekripsi, entropi/histogram, avalanche, dan perbandingan algoritma."></textarea>
+        <label class="field-label" for="testTextData">Teks Plainteks Masukan</label>
+        <textarea id="testTextData" placeholder="Ketik teks yang ingin diuji..."></textarea>
       </div>
 
       <div id="testFilePanel" style="display:none">
-        <label class="field-label" for="testFileData">Pilih Berkas (bisa lebih dari satu)</label>
+        <label class="field-label" for="testFileData">Pilih Berkas Masukan</label>
         <input type="file" id="testFileData" multiple>
         <p class="hint" style="margin-top:6px;">
-          Setiap berkas yang dipilih (mis. Gambar <strong>PNG/JPG</strong>, <strong>PDF</strong>, dokumen, arsip)
-          menjadi data uji asli: dienkripsi lalu didekripsi byte-demi-byte. Berkas pertama juga
-          dipakai sebagai basis uji entropi, avalanche, dan perbandingan.
+          Setiap berkas yang dipilih (PNG, JPG, PDF, TXT) akan dienkripsi lalu didekripsi byte-demi-byte.
         </p>
       </div>
 
-      <label class="field-label" style="display:flex; align-items:center; gap:10px; text-transform:none; letter-spacing:.01em;">
-        <input type="checkbox" id="testIncludeSamples" checked style="width:auto; min-height:auto;">
-        Sertakan berkas contoh <code>sample-image.png</code> &amp; <code>sample-document.pdf</code>
-        (dipakai agar selalu ada minimal 10 data uji)
+      <label class="field-label" style="display:flex; align-items:center; gap:10px; text-transform:none; letter-spacing:normal; cursor:pointer;">
+        <input type="checkbox" id="testIncludeSamples" checked style="width:18px; height:18px; cursor:pointer;">
+        <span>Sertakan berkas contoh (<code>sample-image.png</code> &amp; <code>sample-document.pdf</code>) agar genap minimal 10 dataset</span>
       </label>
 
-      <div id="testConfigStatus" class="hint" style="margin-top:14px; color:var(--accent);"></div>
+      <div id="testConfigStatus" class="hint" style="margin-top:14px; color:var(--primary); font-weight:500;"></div>
       <div id="testConfigError" class="error-box" style="display:none; margin-top:12px;"></div>
     </section>
 
     <section class="panel test-card">
-      <h3>1. Uji Kebenaran Dekripsi</h3>
-      <p class="desc">Minimal 10 data uji yang terdiri dari berkas/teks dari konfigurasi Anda + contoh PNG/PDF + pelengkap otomatis — semuanya dienkripsi lalu didekripsi dan dibandingkan byte-demi-byte.</p>
+      <h3>1. Uji Kebenaran Dekripsi (Integritas Byte)</h3>
+      <p class="desc">Memverifikasi apakah plainteks hasil dekripsi 100% identik dengan data asli secara byte-by-byte untuk minimal 10 dataset.</p>
       <table id="correctnessTable" style="display:none">
-        <thead><tr><th>Data Uji</th><th>Kategori</th><th>Ukuran</th><th>Status</th></tr></thead>
+        <thead><tr><th>Data Uji</th><th>Kategori</th><th>Ukuran</th><th>Status Verifikasi</th></tr></thead>
         <tbody id="correctnessBody"></tbody>
       </table>
     </section>
 
     <section class="panel test-card">
-      <h3>2. Uji Waktu Enkripsi/Dekripsi</h3>
-      <p class="desc">Waktu proses untuk berkas 1 KB, 1 MB, 10 MB (data acak bawaan) ditambah berkas/teks yang Anda unggah (jika sumber data bukan acak).</p>
-      <div id="speedProgress" class="progress-box" style="display:none; font-size:12.5px; padding:8px 12px; margin-bottom:10px;"></div>
+      <h3>2. Uji Waktu Enkripsi &amp; Dekripsi</h3>
+      <p class="desc">Mengukur durasi proses (milidetik) pada berbagai ukuran beban (1 KB, 1 MB, 10 MB) serta berkas pengguna.</p>
+      <div id="speedProgress" class="progress-box" style="display:none; margin-bottom:12px;"></div>
       <table id="speedTable" style="display:none">
         <thead><tr><th>Ukuran / Data</th><th>Sumber</th><th>Waktu Enkripsi</th><th>Waktu Dekripsi</th></tr></thead>
         <tbody id="speedBody"></tbody>
@@ -115,39 +131,44 @@
     </section>
 
     <section class="panel test-card">
-      <h3>3. Uji Avalanche Effect</h3>
-      <p class="desc">Persentase bit cipherteks yang berubah ketika 1 bit plainteks atau kunci diubah (menggunakan salt &amp; IV tetap agar murni mengukur difusi AES). Idealnya mendekati ~50%.</p>
+      <h3>3. Uji Avalanche Effect (Difusi Bit)</h3>
+      <p class="desc">Mengukur persentase perubahan bit cipherteks ketika 1 bit plainteks atau 1 karakter kunci diubah (ideal: ~50%).</p>
       <div id="avalancheResult" style="display:none">
         <div class="metric-row"><span class="metric-label">Perubahan 1 bit plainteks (AES-256-CBC — Mode Blok)</span><span id="avaPlainCBC" class="pass"></span></div>
         <div class="metric-row"><span class="metric-label">Perubahan 1 bit plainteks (AES-256-GCM — Mode Stream/CTR)</span><span id="avaPlain"></span></div>
         <div class="metric-row"><span class="metric-label">Perubahan 1 karakter kunci (AES-256-GCM via PBKDF2)</span><span id="avaKey" class="pass"></span></div>
-        <p class="hint" style="margin-top:10px; font-size:11.5px; line-height:1.5;">Basis data uji: <span id="avaBase" style="color:var(--accent);"></span></p>
-        <p class="hint" style="margin-top:10px; font-size:11.5px; line-height:1.5;">
-          💡 <strong>Analisis Kriptografi:</strong> Pada mode blok (CBC), perubahan 1 bit plainteks menyebar ke seluruh blok (~50% avalanche effect). Pada mode CTR/GCM (stream cipher), perubahan 1 bit plainteks terlokalisasi pada bit aliran terkait ditambah variasi 128-bit authentication tag; sebaliknya, perubahan kunci menghasilkan efek avalanche penuh (~50%).
+        <p class="hint" style="margin-top:12px;">Basis data uji: <span id="avaBase" style="color:var(--primary); font-weight:600;"></span></p>
+        <p class="hint" style="margin-top:8px;">
+          💡 <strong>Analisis:</strong> Pada mode CBC, pergeseran 1 bit menyebar ke seluruh blok ciphertext. Pada mode GCM/CTR, perubahan kunci menghasilkan avalanche effect penuh (~50%) dan integritas dijamin oleh auth tag 128-bit.
         </p>
       </div>
     </section>
 
     <section class="panel test-card">
-      <h3>4. Uji Entropi &amp; Histogram Byte</h3>
-      <p class="desc">Entropi mengukur "keacakan" data (0-8 bit). Cipherteks yang aman seharusnya mendekati 8 dan histogramnya rata. Plainteks memakai data dari konfigurasi (atau data berpola bawaan).</p>
+      <h3>4. Uji Entropi &amp; Histogram Distribusi Byte</h3>
+      <p class="desc">Entropi Shannon mengukur tingkat keacakan data (0-8 bit). Cipherteks berkualitas tinggi memiliki entropi mendekati 8.000 bit dengan distribusi histogram merata.</p>
       <div id="entropyResult" style="display:none">
         <div class="metric-row"><span class="metric-label">Entropi Plainteks</span><span id="entPlain"></span></div>
-        <div class="metric-row"><span class="metric-label">Entropi Cipherteks</span><span id="entCipher"></span></div>
-        <div class="metric-row"><span class="metric-label">Sumber Plainteks</span><span id="entSource"></span></div>
-        <div class="hist-label">Histogram Plainteks (byte 0-255)</div>
+        <div class="metric-row"><span class="metric-label">Entropi Cipherteks</span><span id="entCipher" class="pass"></span></div>
+        <div class="metric-row"><span class="metric-label">Sumber Data</span><span id="entSource"></span></div>
+        <div class="hist-label">Distribusi Histogram Plainteks (byte 0-255)</div>
         <div class="hist-bars" id="histPlain"></div>
-        <div class="hist-label">Histogram Cipherteks (byte 0-255)</div>
+        <div class="hist-label">Distribusi Histogram Cipherteks (byte 0-255)</div>
         <div class="hist-bars" id="histCipher"></div>
       </div>
     </section>
 
     <section class="panel test-card">
-      <h3>5. Perbandingan Algoritma</h3>
-      <p class="desc">AES-256-GCM vs AES-256-CBC pada data uji (berkas/teks Anda atau acak 1 MB), termasuk uji ketahanan terhadap perubahan 1 byte cipherteks.</p>
+      <h3>5. Perbandingan Komprehensif: AES-GCM vs AES-CBC</h3>
+      <p class="desc">Perbandingan performa, entropi, dan ketahanan terhadap manipulasi cipherteks (tampering detection).</p>
       <div id="comparisonResult" style="display:none" class="compare-grid"></div>
     </section>
   </main>
+
+  <footer class="footer">
+    Pengujian kriptografi berjalan 100% pada CPU/kripto lokal di browser Anda via WebCrypto API.
+  </footer>
+
 </div>
 
 <script src="js/crypto.js"></script>
@@ -188,12 +209,6 @@ document.querySelectorAll("#testSourceToggle .mode-btn").forEach((btn) => {
   });
 });
 
-// Tombol lihat password
-document.querySelector(".pw-toggle[data-target='testPassword']")?.addEventListener("click", () => {
-  const input = document.getElementById("testPassword");
-  if (input) input.type = input.type === "password" ? "text" : "password";
-});
-
 document.getElementById("testTextData")?.addEventListener("input", updateConfigStatus);
 document.getElementById("testFileData")?.addEventListener("change", updateConfigStatus);
 document.getElementById("testIncludeSamples")?.addEventListener("change", updateConfigStatus);
@@ -202,7 +217,7 @@ document.getElementById("testIncludeSamples")?.addEventListener("change", update
 function getTestPasswordOrThrow() {
   const password = document.getElementById("testPassword").value;
   if (!password) {
-    throw new Error("Kata sandi uji belum diisi. Isi kolom \u201cKata Sandi Uji\u201d pada panel Konfigurasi Pengujian.");
+    throw new Error("Kata sandi uji belum diisi. Isi kolom “Kata Sandi Uji” pada panel Konfigurasi Pengujian.");
   }
   return password;
 }
@@ -240,10 +255,10 @@ function updateConfigStatus() {
   const textLen = currentTestSource === "text" ? document.getElementById("testTextData").value.length : 0;
   const algoName = getAlgorithmDisplayName(currentTestAlgorithm);
   const includeSamples = document.getElementById("testIncludeSamples").checked ? "sertakan contoh PNG/PDF" : "tanpa contoh";
-  let srcDesc = "data acak/berpola bawaan";
+  let srcDesc = "data acak/berpola standar";
   if (currentTestSource === "text") srcDesc = textLen ? `teks Anda (${textLen} karakter)` : "teks Anda (masih kosong)";
   if (currentTestSource === "file") srcDesc = fileCount ? `${fileCount} berkas Anda` : "berkas Anda (belum ada dipilih)";
-  status.textContent = `>> Konfigurasi aktif: ${algoName} // sumber: ${srcDesc} // ${includeSamples}`;
+  status.textContent = `Konfigurasi aktif: ${algoName} • Sumber: ${srcDesc} • ${includeSamples}`;
 }
 
 function showConfigError(msg) {
@@ -267,13 +282,9 @@ document.getElementById("btnRunAll").addEventListener("click", async () => {
 
     // Saran bila pengguna memilih sumber data sendiri tetapi belum mengisinya.
     if (currentTestSource === "text" && !document.getElementById("testTextData").value) {
-      showConfigError("Anda memilih \u201cTeks Saya\u201d tetapi kolom teks masih kosong \u2014 pengujian tetap memakai data bawaan. Ketik teks lalu jalankan lagi jika ingin memakai teks Anda.");
+      showConfigError("Anda memilih “Teks Saya” tetapi kolom teks masih kosong — pengujian tetap memakai data bawaan.");
     } else if (currentTestSource === "file" && document.getElementById("testFileData").files.length === 0) {
-      showConfigError("Anda memilih \u201cBerkas Saya\u201d tetapi belum ada berkas dipilih \u2014 pengujian tetap memakai data bawaan. Pilih berkas lalu jalankan lagi jika ingin memakai berkas Anda.");
-    } else if (currentTestSource === "text" || currentTestSource === "file") {
-      if (userData.length === 0) {
-        showConfigError("Masukan user kosong (berkas 0 byte / teks kosong) \u2014 pengujian memakai data bawaan.");
-      }
+      showConfigError("Anda memilih “Berkas Saya” tetapi belum ada berkas dipilih — pengujian tetap memakai data bawaan.");
     }
   } catch (err) {
     showConfigError(err.message);
@@ -281,7 +292,7 @@ document.getElementById("btnRunAll").addEventListener("click", async () => {
   }
 
   btn.disabled = true;
-  btn.textContent = "Menjalankan pengujian...";
+  btn.textContent = "Sedang Menjalankan Pengujian...";
 
   try {
     await runAndShowCorrectness(password, userData);
@@ -307,10 +318,10 @@ async function runAndShowCorrectness(password, userData) {
   body.innerHTML = "";
   results.forEach((r) => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${esc(r.name)}</td>
-      <td><span class="badge" style="font-size:11px; padding:2px 8px;">${esc(r.category || "Berkas")}</span></td>
+    tr.innerHTML = `<td><strong>${esc(r.name)}</strong></td>
+      <td><span class="badge">${esc(r.category || "Berkas")}</span></td>
       <td>${formatBytes(r.size)}</td>
-      <td class="${r.pass ? "pass" : "fail"}">${r.pass ? "LULUS" : "GAGAL"}</td>`;
+      <td class="${r.pass ? "pass" : "fail"}">${r.pass ? "✓ LULUS" : "✕ GAGAL"}</td>`;
     body.appendChild(tr);
   });
   document.getElementById("correctnessTable").style.display = "";
@@ -330,10 +341,10 @@ async function runAndShowSpeed(password, userData) {
   body.innerHTML = "";
   results.forEach((r) => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${esc(r.label)}</td>
+    tr.innerHTML = `<td><strong>${esc(r.label)}</strong></td>
       <td>${esc(r.category || "-")}</td>
-      <td>${r.encryptMs.toFixed(2)} ms</td>
-      <td>${r.decryptMs.toFixed(2)} ms</td>`;
+      <td><code>${r.encryptMs.toFixed(2)} ms</code></td>
+      <td><code>${r.decryptMs.toFixed(2)} ms</code></td>`;
     body.appendChild(tr);
   });
   document.getElementById("speedTable").style.display = "";
@@ -355,7 +366,6 @@ function renderHistogram(containerId, freq) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
   const max = Math.max(...freq, 1);
-  // Kelompokkan 256 nilai jadi 64 batang agar tetap ringan ditampilkan
   for (let i = 0; i < 64; i++) {
     const group = freq.slice(i * 4, i * 4 + 4).reduce((a, b) => a + b, 0);
     const bar = document.createElement("div");
@@ -388,10 +398,10 @@ async function runAndShowComparison(password, userData) {
     col.className = "compare-col";
     col.innerHTML = `
       <h4>${getAlgorithmDisplayName(algo)}</h4>
-      <div class="metric-row"><span class="metric-label">Waktu enkripsi</span><span>${r.encryptMs.toFixed(2)} ms</span></div>
-      <div class="metric-row"><span class="metric-label">Waktu dekripsi</span><span>${r.decryptMs.toFixed(2)} ms</span></div>
-      <div class="metric-row"><span class="metric-label">Entropi cipherteks</span><span>${r.entropy.toFixed(3)} bit</span></div>
-      <div class="metric-row"><span class="metric-label">Deteksi tampering</span><span class="${r.detectsTampering ? "pass" : "fail"}">${r.detectsTampering ? "Ya" : "Tidak"}</span></div>
+      <div class="metric-row"><span class="metric-label">Waktu enkripsi</span><span><code>${r.encryptMs.toFixed(2)} ms</code></span></div>
+      <div class="metric-row"><span class="metric-label">Waktu dekripsi</span><span><code>${r.decryptMs.toFixed(2)} ms</code></span></div>
+      <div class="metric-row"><span class="metric-label">Entropi cipherteks</span><span><code>${r.entropy.toFixed(3)} bit</code></span></div>
+      <div class="metric-row"><span class="metric-label">Deteksi tampering</span><span class="${r.detectsTampering ? "pass" : "fail"}">${r.detectsTampering ? "✓ Terdeteksi (Aman)" : "✕ Tidak Terdeteksi"}</span></div>
     `;
     container.appendChild(col);
   }
