@@ -13,6 +13,7 @@
 
 /** Enkripsi satu blok 16-byte dengan trik "CBC + IV nol" = ECB. */
 async function encryptECBBlock(key, block16) {
+  ensureWebCrypto();
   const zeroIV = new Uint8Array(16);
   const result = await crypto.subtle.encrypt({ name: "AES-CBC", iv: zeroIV }, key, block16);
   // Web Crypto otomatis menambah 1 blok padding; kita buang, ambil 16 byte pertama saja

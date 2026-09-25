@@ -20,11 +20,28 @@
 // ============================================================
 
 /**
+ * Pastikan Web Crypto API (crypto.subtle) tersedia.
+ * Web Crypto hanya aktif di secure context (HTTPS / localhost),
+ * sehingga jika aplikasi dibuka lewat file:// atau HTTP non-HTTPS
+ * kita berikan pesan yang jelas, bukan error "importKey undefined".
+ */
+function ensureWebCrypto() {
+  if (typeof crypto === "undefined" || !crypto.subtle) {
+    throw new Error(
+      "Fitur kriptografi hanya tersedia di koneksi aman (HTTPS atau localhost). " +
+      "Buka aplikasi lewat alamat http://localhost..., bukan dari file://."
+    );
+  }
+  return crypto.subtle;
+}
+
+/**
  * Menurunkan kunci kriptografis dari password memakai PBKDF2.
  * Salt acak wajib berbeda setiap kali enkripsi agar kunci yang
  * dihasilkan juga selalu berbeda meski password sama.
  */
 async function deriveKey(password, salt, algorithmName, keyLength = 256) {
+  ensureWebCrypto();
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(password),
