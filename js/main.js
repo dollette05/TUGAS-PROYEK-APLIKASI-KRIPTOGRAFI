@@ -11,6 +11,7 @@
 let currentAlgorithm = "AES-GCM";
 let currentMode = "text";
 let selectedFile = null;
+const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 // ============================================================
 // TOGGLE ALGORITMA & MODE
@@ -368,6 +369,12 @@ async function handleFileOperation(operation, password) {
 
   if (!selectedFile) return showFileError("Pilih berkas terlebih dahulu.");
   if (!password) return showFileError("Kata sandi wajib diisi.");
+
+  if (selectedFile.size > MAX_FILE_BYTES) {
+    return showFileError(
+      `Berkas terlalu besar (>${MAX_FILE_BYTES / (1024 * 1024)} MB). Batasi ukuran agar browser tidak hang, lalu coba lagi.`
+    );
+  }
 
   document.getElementById("fileProgress").style.display = "";
 
