@@ -14,6 +14,12 @@
 let currentTestSource = "random";   // random | text | file
 let currentTestAlgorithm = "AES-GCM";
 
+// Batas ukuran berkas untuk pengujian: 10 MB per berkas.
+// Pengujian menjalankan enkripsi/dekripsi berkali-kali (5 skenario,
+// komparasi 3 run), sehingga berkas raksasa akan menghang browser.
+const MAX_TEST_FILE_BYTES = 10 * 1024 * 1024; // 10 MB
+let skippedOversizedFiles = [];
+
 function esc(str) {
   return String(str).replace(/[&<>"']/g, function (c) {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -70,6 +76,10 @@ async function buildUserDataFromConfig() {
   } else if (currentTestSource === "file") {
     const files = document.getElementById("testFileData").files;
     for (const f of files) {
+      if (f.size > MAX_TEST_FILE_BYTES) {
+        skippedOversizedFiles.push(f.name);
+        continue;
+      }
       list.push({
         name: f.name,
         category: categorizeFile(f),
@@ -111,6 +121,7 @@ document.getElementById("btnRunAll").addEventListener("click", async () => {
   let userData = [];
   try {
     password = getTestPasswordOrThrow();
+    skippedOversizedFiles = [];
     userData = await buildUserDataFromConfig();
 
     // Saran bila pengguna memilih sumber data sendiri tetapi belum mengisinya.
@@ -118,6 +129,8 @@ document.getElementById("btnRunAll").addEventListener("click", async () => {
       showConfigError("Anda memilih “Teks Saya” tetapi kolom teks masih kosong — pengujian tetap memakai data bawaan.");
     } else if (currentTestSource === "file" && document.getElementById("testFileData").files.length === 0) {
       showConfigError("Anda memilih “Berkas Saya” tetapi belum ada berkas dipilih — pengujian tetap memakai data bawaan.");
+    } else if (skippedOversizedFiles.length) {
+      showConfigError(`Melewati ${skippedOversizedFiles.length} berkas melebihi 10 MB (${skippedOversizedFiles.join(", ")}) agar browser tidak hang.`);
     }
   } catch (err) {
     showConfigError(err.message);
