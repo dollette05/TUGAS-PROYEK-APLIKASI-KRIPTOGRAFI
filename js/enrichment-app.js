@@ -14,9 +14,27 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
 
   const btn = document.getElementById("btnProcess");
   const statusBox = document.getElementById("processStatus");
+
+  // Validasi tipe & ukuran: hanya citra maks 10 MB (hasil akhir selalu
+  // di-downscale ke 256px, jadi berkas raksasa tidak menambah kualitas).
+  const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
+  if (!file.type.startsWith("image/")) {
+    statusBox.style.display = "";
+    statusBox.className = "error-box";
+    statusBox.textContent = "Berkas yang dipilih bukan gambar. Pilih file PNG, JPG, atau WEBP.";
+    return;
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    statusBox.style.display = "";
+    statusBox.className = "error-box";
+    statusBox.textContent = "Ukuran gambar melebihi 10 MB. Kecilkan dulu lalu coba lagi.";
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = "Memproses citra...";
   statusBox.style.display = "";
+  statusBox.className = "progress-box";
   statusBox.textContent = "Menyiapkan citra dan kunci kriptografi acak...";
 
   try {
@@ -74,9 +92,10 @@ document.getElementById("btnProcess").addEventListener("click", async () => {
 });
 
 function loadImage(file) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Berkas tidak dapat dibaca sebagai gambar."));
     img.src = URL.createObjectURL(file);
   });
 }
