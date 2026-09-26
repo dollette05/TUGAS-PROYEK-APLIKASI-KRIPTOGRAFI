@@ -3,6 +3,19 @@
 .hero {
   overflow: hidden;
   position: relative;
+  background-image: radial-gradient(circle at 85% 12%, rgba(251, 191, 36, 0.10), transparent 45%);
+}
+
+.hero-art {
+  display: flex;
+  justify-content: center;
+  color: var(--primary);
+  margin-bottom: 14px;
+  opacity: 0.95;
+}
+
+.hero-title .warm {
+  color: var(--warning);
 }
 
 .hero-badge {
