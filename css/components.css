@@ -644,6 +644,93 @@ textarea::placeholder {
 }
 
 /* =====================================================================
+   MODE INTRO & ALGO HINT (penjelasan singkat tiap halaman)
+   ===================================================================== */
+.mode-intro {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.mode-intro-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--r-md);
+  flex-shrink: 0;
+  color: var(--primary);
+  background: var(--toggle-bg);
+  border: 1px solid var(--border);
+}
+
+.algo-hint-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+@media (min-width: 640px) {
+  .algo-hint-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.algo-hint-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 11px 13px;
+  font-size: 0.83rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.algo-hint-item svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--primary);
+}
+
+.algo-hint-item p {
+  margin: 0;
+}
+
+.notice-box {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid var(--warning-border);
+  background: var(--warning-bg);
+  color: var(--text);
+  border-radius: var(--r-md);
+  padding: 13px 15px;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.notice-box svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--warning);
+}
+
+.notice-box strong {
+  font-weight: 700;
+}
+
+.inline-icon {
+  display: inline-flex;
+  vertical-align: -3px;
+  margin-right: 4px;
+  color: var(--primary);
+}
+
+/* =====================================================================
    FOOTER
    ===================================================================== */
 .footer {
