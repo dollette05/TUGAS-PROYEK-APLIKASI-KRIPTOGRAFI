@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Enkripsi &amp; Dekripsi — Brankas Digital</title>
+<script>
+  (function() {
+    var saved = localStorage.getItem("brankas-theme");
+    var theme = saved || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand-group">
+      <a href="index.html" class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          <circle cx="12" cy="16" r="1"></circle>
+        </svg>
+        <span>Brankas Digital</span>
+      </a>
+      <span class="brand-badge">Client-Side</span>
+    </div>
+    <div class="topbar-actions">
+      <nav class="topnav">
+        <a href="index.html">Beranda</a>
+        <a href="enkripsi.html" class="active">Enkripsi &amp; Dekripsi</a>
+        <a href="testing.html">Pengujian</a>
+        <a href="enrichment.html">Visualisasi ECB</a>
+      </nav>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti Tema" title="Ganti Mode Tema">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- Pemilihan algoritma -->
+    <section class="panel">
+      <div class="mode-intro">
+        <span class="mode-intro-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </span>
+        <div>
+          <h2 style="margin-bottom:4px;">Enkripsi &amp; Dekripsi</h2>
+          <p class="hint" style="margin-top:0;">Ketik teks atau pilih berkas, masukkan kata sandi, lalu klik Enkripsi. Semua proses berjalan di browser Anda — tidak ada data yang dikirim ke server.</p>
+        </div>
+      </div>
+      <h2 style="margin-top:18px;">Algoritma Kriptografi</h2>
+      <div class="algo-toggle" id="algoToggle">
+        <button class="algo-btn active" data-algo="AES-GCM" type="button">AES-256-GCM (Rekomendasi)</button>
+        <button class="algo-btn" data-algo="AES-CBC" type="button">AES-256-CBC (Pembanding)</button>
+      </div>
+      <div class="algo-hint-grid">
+        <div class="algo-hint-item">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+          <p><strong>GCM:</strong> Mode utama. Otomatis menolak jika kata sandi salah atau file diubah.</p>
+        </div>
+        <div class="algo-hint-item">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          <p><strong>CBC:</strong> Mode klasik untuk perbandingan. Tidak bisa mendeteksi perubahan data.</p>
+        </div>
+      </div>
+      <p class="hint">Penjelasan lengkap ada di <a href="index.html#cara-kerja" style="color:var(--primary); font-weight:600;">Beranda → Cara kerja</a>.</p>
+    </section>
+
+    <!-- Mode: teks atau berkas -->
+    <section class="panel">
+      <h2>Operasi Kriptografi</h2>
+      <div class="mode-toggle" id="modeToggle">
+        <button class="mode-btn active" data-mode="text" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          Mode Teks
+        </button>
+        <button class="mode-btn" data-mode="file" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Mode Berkas
+        </button>
+      </div>
+
+      <!-- ==== MODE TEKS ==== -->
+      <div id="modeTextPanel" class="mode-panel">
+        <label class="field-label" for="textInput">Teks Masukan / Cipherteks</label>
+        <textarea id="textInput" rows="5" placeholder="Ketik teks yang ingin dienkripsi, atau tempel cipherteks (Base64/Hex) untuk didekripsi..."></textarea>
+
+        <label class="field-label" for="textPassword">Kata Sandi (Passphrase)</label>
+        <div class="pw-field">
+          <input type="password" id="textPassword" placeholder="Masukkan kata sandi pengamanan..." autocomplete="new-password">
+          <button class="pw-toggle" type="button" data-target="textPassword" aria-label="Tampilkan kata sandi"></button>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-primary" id="btnEncryptText" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Enkripsi Teks
+          </button>
+          <button class="btn-secondary" id="btnDecryptText" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+            </svg>
+            Dekripsi Teks
+          </button>
+        </div>
+
+        <div id="textResultBox" class="result-box" style="display:none">
+          <div class="result-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="textResultBadge" class="badge"></span>
+              <div class="format-toggle" id="formatToggle" style="display:none">
+                <button class="btn-fmt active" id="btnFmtBase64" type="button">Base64</button>
+                <button class="btn-fmt" id="btnFmtHex" type="button">Hex</button>
+              </div>
+            </div>
+            <button id="btnCopyText" class="btn-copy" type="button">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Salin
+            </button>
+          </div>
+          <textarea id="textResult" rows="5" readonly spellcheck="false"></textarea>
+        </div>
+
+        <div id="textError" class="error-box" style="display:none"></div>
+      </div>
+
+      <!-- ==== MODE BERKAS ==== -->
+      <div id="modeFilePanel" class="mode-panel" style="display:none">
+        <label class="field-label">Berkas Target</label>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" hidden>
+          <div style="margin-bottom: 8px;">
+            <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); opacity: 0.9;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <p id="dropzoneText"><strong>Pilih atau seret berkas ke sini</strong><br><span style="font-size: 0.8rem; color: var(--text-muted);">Mendukung semua format (Dokumen, Gambar, PDF, Arsip, dll.)</span></p>
+        </div>
+
+        <label class="field-label" for="filePassword">Kata Sandi (Passphrase)</label>
+        <div class="pw-field">
+          <input type="password" id="filePassword" placeholder="Masukkan kata sandi pengamanan berkas..." autocomplete="new-password">
+          <button class="pw-toggle" type="button" data-target="filePassword" aria-label="Tampilkan kata sandi"></button>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-primary" id="btnEncryptFile" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Enkripsi &amp; Unduh (.enc)
+          </button>
+          <button class="btn-secondary" id="btnDecryptFile" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Dekripsi &amp; Unduh Asli
+          </button>
+        </div>
+
+        <div id="fileProgress" class="progress-box" style="display:none">Sedang memproses berkas secara lokal...</div>
+        <div id="fileSuccess" class="success-box" style="display:none"></div>
+        <div id="fileError" class="error-box" style="display:none"></div>
+
+        <p class="hint">
+          Hasil enkripsi <strong>.enc</strong> berupa <strong>data biner</strong> — jangan membukanya dengan
+          Notepad/teks editor karena berukuran besar akan membuat editor hang. Untuk memverifikasi,
+          gunakan tombol <strong>Dekripsi &amp; Unduh Asli</strong> di atas.<br>
+          Untuk melindungi <strong>banyak berkas sekaligus</strong>, ubah terlebih dahulu file menjadi <strong>.zip</strong>, lalu enkripsi berkas zip-nya di sini.<br>
+          Batas ukuran berkas yang diproses: <strong>maks. 50 MB</strong>.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    Diproses 100% di browser lokal menggunakan WebCrypto API — tidak ada data yang dikirim ke server.
+  </footer>
+
+</div>
+
+<script src="js/crypto.js"></script>
+<script src="js/main.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>

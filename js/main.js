@@ -1,7 +1,7 @@
 /*
  * main.js
  * -------------------------------------------------------
- * Penghubung antara UI (index.html) dan logika kriptografi
+ * Penghubung antara UI (enkripsi.html) dan logika kriptografi
  * (crypto.js). File ini TIDAK berisi logika enkripsi apa pun
  * — hanya mengatur alur: baca input user -> panggil crypto.js
  * -> tampilkan hasil ke UI.
