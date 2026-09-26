@@ -334,6 +334,23 @@ textarea::placeholder {
   opacity: 0.8;
 }
 
+/* Sembunyikan tombol reveal/clear bawaan browser (Edge/IE/Chrome)
+   agar hanya tersisa 1 tombol mata custom (.pw-toggle). */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+input::-webkit-credentials-auto-fill-button,
+input::-webkit-textfield-decoration-container {
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}
+
 /* Password field with toggle */
 .pw-field {
   position: relative;

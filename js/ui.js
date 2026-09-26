@@ -97,9 +97,8 @@
 
       btn.addEventListener("click", function () {
         if (!input) return;
-        setTimeout(function () {
-          updateIcon(input.type === "text");
-        }, 15);
+        input.type = input.type === "password" ? "text" : "password";
+        updateIcon(input.type === "text");
       });
     });
   }
