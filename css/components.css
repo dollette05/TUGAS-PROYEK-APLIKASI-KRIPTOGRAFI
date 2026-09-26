@@ -236,6 +236,22 @@
   padding: 5px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
+  position: relative;
+}
+
+/* Pil penanda geser (solid biru, tanpa glow/gradien).
+   Gerakan utama ditangani GSAP (expo.out); transisi CSS ini hanya
+   fallback saat CDN tidak terjangkau — easing-nya dibuat halus. */
+.seg-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-radius: var(--r-md);
+  background: var(--primary);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), width 0.3s cubic-bezier(0.22, 1, 0.36, 1), height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
 }
 
 .algo-btn, .mode-btn {
@@ -254,27 +270,41 @@
   font-weight: 500;
   cursor: pointer;
   touch-action: manipulation;
-  transition: all var(--dur-fast) var(--ease);
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+  position: relative;
+  z-index: 1;
 }
 
 .algo-btn:hover, .mode-btn:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.04);
 }
 
 .algo-btn.active, .mode-btn.active {
-  background: var(--surface);
-  color: var(--primary);
+  background: transparent;
+  color: var(--primary-contrast);
   font-weight: 600;
-  border-color: var(--border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: transparent;
+  box-shadow: none;
 }
 
 [data-theme="dark"] .algo-btn.active,
 [data-theme="dark"] .mode-btn.active {
-  background: rgba(56, 189, 248, 0.12);
-  border-color: rgba(56, 189, 248, 0.25);
-  color: var(--primary);
+  background: transparent;
+  border-color: transparent;
+  color: var(--primary-contrast);
+  box-shadow: none;
+}
+
+/* Panel mode: fade lembut tiap kali ditampilkan */
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.mode-panel,
+#testTextPanel,
+#testFilePanel {
+  animation: panelIn 0.22s var(--ease);
 }
 
 /* =====================================================================

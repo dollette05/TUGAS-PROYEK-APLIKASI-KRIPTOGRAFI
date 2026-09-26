@@ -156,6 +156,72 @@
   }
 
   // ======================================================
+  // 2c. PIL GESER SEGMENTED CONTROL (GCM/CBC, Teks/Berkas, dll.)
+  // Hanya menggerakkan indikator; state aktif tetap diatur
+  // oleh handler masing-masing halaman (main.js / testing-app.js).
+  // ======================================================
+  function initSegmented() {
+    var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    document.querySelectorAll(".algo-toggle, .mode-toggle").forEach(function (bar) {
+      var thumb = bar.querySelector(".seg-thumb");
+      if (!thumb) return;
+      var btns = Array.prototype.slice.call(bar.querySelectorAll(".algo-btn, .mode-btn"));
+      if (!btns.length) return;
+      var placed = false;
+
+      function place(active) {
+        // Tanpa animasi: posisi awal & mode hemat-gerak
+        if (window.gsap && !reduceMotion) {
+          gsap.set(thumb, { x: active.offsetLeft, y: active.offsetTop, width: active.offsetWidth, height: active.offsetHeight });
+        } else {
+          thumb.style.width = active.offsetWidth + "px";
+          thumb.style.height = active.offsetHeight + "px";
+          thumb.style.transform = "translate(" + active.offsetLeft + "px," + active.offsetTop + "px)";
+        }
+        placed = true;
+      }
+
+      function move() {
+        var active = bar.querySelector(".algo-btn.active, .mode-btn.active") || btns[0];
+        if (!placed || reduceMotion) {
+          place(active);
+          return;
+        }
+        if (window.gsap) {
+          // Luncuran halus tanpa mental (expo.out), tween lama dimatikan
+          // agar klik cepat beruntun tidak menumpuk & berguncang.
+          gsap.to(thumb, {
+            x: active.offsetLeft,
+            y: active.offsetTop,
+            width: active.offsetWidth,
+            height: active.offsetHeight,
+            duration: 0.35,
+            ease: "expo.out",
+            overwrite: "auto",
+          });
+        } else {
+          // Fallback saat CDN tidak terjangkau (mis. offline): transisi CSS.
+          thumb.style.width = active.offsetWidth + "px";
+          thumb.style.height = active.offsetHeight + "px";
+          thumb.style.transform = "translate(" + active.offsetLeft + "px," + active.offsetTop + "px)";
+        }
+      }
+
+      btns.forEach(function (b) {
+        b.addEventListener("click", function () {
+          requestAnimationFrame(move);
+        });
+      });
+      window.addEventListener("resize", move);
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(move);
+      }
+      move();
+    });
+  }
+
+  // ======================================================
   // 3. COPY BUTTON FEEDBACK ANIMATION
   // ======================================================
   function initCopyFeedback() {
@@ -204,6 +270,7 @@
       initTheme();
       initPasswordToggles();
       initPasswordMeters();
+      initSegmented();
       initCopyFeedback();
       initFooterStatus();
     });
@@ -211,6 +278,7 @@
     initTheme();
     initPasswordToggles();
     initPasswordMeters();
+    initSegmented();
     initCopyFeedback();
     initFooterStatus();
   }
