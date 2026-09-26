@@ -237,6 +237,7 @@ if (typeof document !== "undefined") {
       currentCipherHex = packageToHex(result);
 
       showEncryptedTextResult(result.algorithm);
+      renderPackageInfo(result);
     } catch (err) {
       showTextError(err.message);
     }
@@ -269,11 +270,39 @@ function showEncryptedTextResult(algorithm) {
   setFormat(currentFormat);
 }
 
+/** Tampilkan rincian paket hasil enkripsi (edukatif, untuk bahan demo). */
+function renderPackageInfo(result) {
+  const box = document.getElementById("textPackageInfo");
+  if (!box || !result) return;
+  const isGCM = result.algorithm === "AES-GCM";
+  const ivLen = new Uint8Array(result.iv).length;
+  const ctLen = result.ciphertext.byteLength;
+  const short = (buffer) => {
+    const hex = bufferToHex(buffer);
+    return hex.length > 32 ? hex.slice(0, 32) + "…" : hex;
+  };
+  const tagRow = isGCM
+    ? `<div class="pkg-row"><span>Auth tag</span><code>16 byte (menempel di ujung cipherteks)</code></div>`
+    : `<div class="pkg-row"><span>Auth tag</span><code>Tidak ada (khas CBC)</code></div>`;
+  box.innerHTML =
+    `<div class="pkg-title">Rincian paket</div>` +
+    `<div class="pkg-row"><span>Salt</span><code>16 byte · ${short(result.salt)}</code></div>` +
+    `<div class="pkg-row"><span>IV / Nonce</span><code>${ivLen} byte · ${short(result.iv)}</code></div>` +
+    tagRow +
+    `<div class="pkg-row"><span>Cipherteks</span><code>${ctLen} byte</code></div>`;
+}
+
+function clearPackageInfo() {
+  const box = document.getElementById("textPackageInfo");
+  if (box) box.innerHTML = "";
+}
+
 function showDecryptedTextResult(plainText, algorithm) {
   document.getElementById("textResultBox").style.display = "";
   document.getElementById("textResultBadge").textContent = getAlgorithmDisplayName(algorithm) + " (Plainteks)";
   document.getElementById("formatToggle").style.display = "none";
   document.getElementById("textResult").value = plainText;
+  clearPackageInfo();
 }
 
 function setFormat(fmt) {
@@ -305,6 +334,7 @@ function showTextError(msg) {
   }
   const resultBox = document.getElementById("textResultBox");
   if (resultBox) resultBox.style.display = "none";
+  clearPackageInfo();
 }
 
 function hideTextError() {
@@ -395,7 +425,7 @@ async function handleFileOperation(operation, password) {
     }
 
     downloadBlob(outputBlob, outputName);
-    showFileSuccess(`Berhasil! Berkas "${outputName}" telah diunduh.`);
+    showFileSuccess(`Berhasil! Berkas "${outputName}" telah diunduh (${(outputBlob.size / 1024).toFixed(1)} KB).`);
   } catch (err) {
     showFileError(err.message || "Operasi gagal: kata sandi salah atau berkas telah diubah.");
   } finally {

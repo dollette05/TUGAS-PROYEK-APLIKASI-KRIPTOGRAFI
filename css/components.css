@@ -375,7 +375,79 @@ input::-webkit-textfield-decoration-container {
   background: rgba(255, 255, 255, 0.06);
 }
 
-/* === BLOK SAYA (meter + inspector, commit terpisah) === */
+/* Meter kekuatan kata sandi (ringan, tanpa dependensi) */
+.pw-meter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.pw-meter-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--toggle-bg);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.pw-meter-bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: var(--r-full);
+  transition: width var(--dur-norm) var(--ease), background var(--dur-fast);
+}
+
+.pw-meter-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  min-width: 86px;
+  text-align: right;
+  color: var(--text-muted);
+}
+
+/* Rincian paket hasil enkripsi (edukatif) */
+.package-info {
+  margin-top: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--toggle-bg);
+  padding: 12px 14px;
+  font-size: 0.8rem;
+}
+
+.pkg-title {
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.pkg-row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 4px 0;
+  line-height: 1.5;
+}
+
+.pkg-row span {
+  flex-shrink: 0;
+  width: 92px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.pkg-row code {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--primary);
+  word-break: break-all;
+}
 
 /* Hints & Guidelines */
 .hint {

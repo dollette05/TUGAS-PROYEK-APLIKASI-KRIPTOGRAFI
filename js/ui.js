@@ -104,6 +104,58 @@
   }
 
   // ======================================================
+  // 2b. METER KEKUATAN KATA SANDI (murni hitungan lokal ringan)
+  // ======================================================
+  function scorePassword(pw) {
+    if (!pw) return -1;
+    var lenPts = pw.length >= 16 ? 3 : pw.length >= 12 ? 2 : pw.length >= 8 ? 1 : 0;
+    var variety = 0;
+    if (/[a-z]/.test(pw)) variety++;
+    if (/[A-Z]/.test(pw)) variety++;
+    if (/[0-9]/.test(pw)) variety++;
+    if (/[^a-zA-Z0-9]/.test(pw)) variety++;
+    return lenPts + variety; // 0-7
+  }
+
+  function initPasswordMeters() {
+    document.querySelectorAll(".pw-meter").forEach(function (meter) {
+      var input = document.getElementById(meter.getAttribute("data-for"));
+      var bar = meter.querySelector(".pw-meter-bar span");
+      var label = meter.querySelector(".pw-meter-label");
+      if (!input || !bar || !label) return;
+
+      var bands = [
+        { max: 2, text: "Lemah", color: "var(--danger)" },
+        { max: 4, text: "Cukup", color: "var(--warning)" },
+        { max: 6, text: "Kuat", color: "var(--success)" },
+        { max: 7, text: "Sangat kuat", color: "var(--primary)" },
+      ];
+
+      function render() {
+        var score = scorePassword(input.value);
+        if (score < 0) {
+          bar.style.width = "0%";
+          label.textContent = "";
+          return;
+        }
+        var band = bands[0];
+        for (var i = 0; i < bands.length; i++) {
+          if (score <= bands[i].max) { band = bands[i]; break; }
+          band = bands[i];
+        }
+        bar.style.width = Math.round((score / 7) * 100) + "%";
+        bar.style.background = band.color;
+        bar.style.boxShadow = "none";
+        label.textContent = band.text;
+        label.style.color = band.color;
+      }
+
+      input.addEventListener("input", render);
+      render();
+    });
+  }
+
+  // ======================================================
   // 3. COPY BUTTON FEEDBACK ANIMATION
   // ======================================================
   function initCopyFeedback() {
@@ -151,12 +203,14 @@
     document.addEventListener("DOMContentLoaded", function () {
       initTheme();
       initPasswordToggles();
+      initPasswordMeters();
       initCopyFeedback();
       initFooterStatus();
     });
   } else {
     initTheme();
     initPasswordToggles();
+    initPasswordMeters();
     initCopyFeedback();
     initFooterStatus();
   }
